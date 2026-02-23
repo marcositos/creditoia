@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CréditoIA — Nova Consulta</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#040812; --surface:#0c1220; --surface2:#111827; --border:#1e293b;
+    --accent:#3b82f6; --accent2:#6366f1; --green:#10b981; --yellow:#f59e0b; --red:#ef4444;
+    --text:#e2e8f0; --muted:#64748b;
+    --font-head:'Syne',sans-serif; --font-body:'DM Sans',sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; }
+  body::before {
+    content:'';position:fixed;inset:0;
+    background-image:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);
+    background-size:40px 40px; pointer-events:none; z-index:0;
+  }
+  .layout { display:flex; min-height:100vh; position:relative; z-index:1; }
+
+  .sidebar {
+    width:260px; min-height:100vh; background:var(--surface);
+    border-right:1px solid var(--border); display:flex; flex-direction:column;
+    padding:24px 0; position:fixed; left:0; top:0; bottom:0;
+  }
+  .logo { padding:0 24px 32px; font-family:var(--font-head); font-size:22px; font-weight:800; letter-spacing:-0.5px; }
+  .logo span { color:var(--accent); }
+  .logo sub { font-size:10px; color:var(--muted); display:block; font-weight:400; margin-top:-4px; }
+  .nav a { display:flex; align-items:center; gap:12px; padding:12px 24px; color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; transition:all 0.2s; border-left:3px solid transparent; }
+  .nav a:hover { color:var(--text); background:rgba(59,130,246,0.05); }
+  .nav a.active { color:var(--accent); border-left-color:var(--accent); background:rgba(59,130,246,0.08); }
+  .nav a svg { width:18px; height:18px; flex-shrink:0; }
+
+  .main { margin-left:260px; flex:1; padding:32px; max-width:calc(100% - 260px); }
+  .page-header { margin-bottom:32px; }
+  .page-header h1 { font-family:var(--font-head); font-size:28px; font-weight:800; letter-spacing:-0.5px; }
+  .page-header p { color:var(--muted); font-size:14px; margin-top:4px; }
+
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .form-grid.three { grid-template-columns:1fr 1fr 1fr; }
+  .form-grid.full { grid-template-columns:1fr; }
+
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:28px; margin-bottom:24px;
+  }
+  .card-title {
+    font-family:var(--font-head); font-size:16px; font-weight:700;
+    margin-bottom:6px; display:flex; align-items:center; gap:10px;
+  }
+  .card-title .step {
+    width:28px; height:28px; border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800; color:white;
+  }
+  .card-subtitle { font-size:13px; color:var(--muted); margin-bottom:20px; }
+
+  .field { display:flex; flex-direction:column; gap:6px; }
+  label { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.8px; }
+  input, select, textarea {
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    color:var(--text); padding:12px 14px; font-size:14px; font-family:var(--font-body);
+    width:100%; transition:border-color 0.2s;
+  }
+  input:focus, select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+  input::placeholder { color:var(--muted); }
+  select option { background:var(--surface2); }
+
+  .cnpj-row { display:flex; gap:12px; align-items:flex-end; }
+  .cnpj-row .field { flex:1; }
+  
+  .btn-primary {
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none; border-radius:10px; color:white; padding:12px 24px;
+    font-size:14px; font-weight:600; cursor:pointer; font-family:var(--font-body);
+    transition:opacity 0.2s; box-shadow:0 4px 15px rgba(59,130,246,0.3);
+    display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+  }
+  .btn-primary:hover { opacity:0.9; }
+  .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+  
+  .btn-secondary {
+    background:none; border:1px solid var(--border); border-radius:10px;
+    color:var(--text); padding:12px 24px; font-size:14px; font-weight:500;
+    cursor:pointer; font-family:var(--font-body); transition:all 0.2s;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* FETCHED DATA PREVIEW */
+  .data-preview {
+    background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.2);
+    border-radius:12px; padding:20px; margin-top:20px; display:none;
+  }
+  .data-preview.show { display:block; }
+  .preview-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px; }
+  .preview-item { }
+  .preview-item label { font-size:11px; color:var(--muted); display:block; margin-bottom:2px; }
+  .preview-item span { font-size:13px; font-weight:500; }
+
+  .source-tags { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .source-tag {
+    padding:4px 10px; border-radius:100px; font-size:11px; font-weight:600;
+    border:1px solid;
+  }
+  .source-tag.ok { background:rgba(16,185,129,0.1); border-color:#10b981; color:#10b981; }
+  .source-tag.err { background:rgba(239,68,68,0.1); border-color:#ef4444; color:#ef4444; }
+
+  /* QSA */
+  .socio-card {
+    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; margin-top:8px;
+  }
+  .socio-name { font-size:14px; font-weight:600; }
+  .socio-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+
+  /* RESULT */
+  .result-overlay {
+    position:fixed; inset:0; background:rgba(4,8,18,0.95); z-index:200;
+    display:none; align-items:center; justify-content:center;
+    padding:24px; overflow-y:auto;
+  }
+  .result-overlay.show { display:flex; }
+  .result-box {
+    background:var(--surface); border:1px solid var(--border); border-radius:24px;
+    padding:40px; width:100%; max-width:800px; max-height:90vh; overflow-y:auto;
+    position:relative;
+  }
+  .result-close {
+    position:absolute; top:16px; right:16px;
+    background:none; border:1px solid var(--border); border-radius:8px;
+    color:var(--muted); padding:6px 14px; cursor:pointer; font-family:var(--font-body);
+    font-size:13px;
+  }
+  .result-close:hover { color:var(--text); border-color:var(--text); }
+
+  .score-display {
+    text-align:center; padding:32px;
+    background:linear-gradient(135deg,rgba(59,130,246,0.05),rgba(99,102,241,0.05));
+    border-radius:16px; border:1px solid rgba(59,130,246,0.15); margin-bottom:28px;
+  }
+  .score-number {
+    font-family:var(--font-head); font-size:72px; font-weight:800;
+    line-height:1; letter-spacing:-3px;
+  }
+  .score-label { font-size:14px; color:var(--muted); margin-top:4px; }
+  .risco-badge {
+    display:inline-block; padding:6px 20px; border-radius:100px;
+    font-size:14px; font-weight:700; font-family:var(--font-head); margin-top:12px;
+  }
+  
+  .valor-sugerido-box {
+    background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.2);
+    border-radius:12px; padding:20px; text-align:center; margin-bottom:20px;
+  }
+  .valor-sugerido-box .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .valor-sugerido-box .value { font-family:var(--font-head); font-size:36px; font-weight:800; color:var(--green); margin-top:4px; }
+
+  .reasons-list { margin-bottom:20px; }
+  .reason-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid rgba(30,41,59,0.5); font-size:13px; }
+  .reason-item:last-child { border-bottom:none; }
+  .reason-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+  .reason-score { margin-left:auto; font-weight:600; flex-shrink:0; }
+
+  .ai-analysis { 
+    background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+    padding:20px; white-space:pre-wrap; font-size:13px; line-height:1.8;
+    color:var(--text); margin-bottom:20px; max-height:400px; overflow-y:auto;
+  }
+
+  .result-actions { display:flex; gap:12px; flex-wrap:wrap; }
+
+  /* Spinner */
+  .spinner {
+    width:20px; height:20px; border:2px solid rgba(255,255,255,0.3);
+    border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin { to{ transform:rotate(360deg); } }
+
+  /* Loading overlay */
+  .loading-overlay {
+    position:fixed; inset:0; background:rgba(4,8,18,0.9); z-index:300;
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+  }
+  .loading-overlay.show { display:flex; }
+  .loading-text { font-family:var(--font-head); font-size:18px; font-weight:700; }
+  .loading-step { font-size:13px; color:var(--muted); }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .card { animation:fadeIn 0.3s ease both; }
+  .card:nth-child(2) { animation-delay:0.05s; }
+  .card:nth-child(3) { animation-delay:0.1s; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">Crédito<span>IA</span><sub>Análise de Risco Empresarial</sub></div>
+    <nav class="nav">
+      <a href="/">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        Dashboard
+      </a>
+      <a href="/nova-consulta" class="active">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nova Consulta
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <h1>Nova Consulta</h1>
+      <p>Análise completa de crédito e risco empresarial</p>
+    </div>
+
+    <!-- STEP 1: CRÉDITO -->
+    <div class="card">
+      <div class="card-title">
+        <div class="step">1</div>
+        Crédito Solicitado
+      </div>
+      <div class="card-subtitle">Informe os dados do crédito que a empresa está solicitando</div>
+      <div class="form-grid three">
+        <div class="field">
+          <label>💰 Valor Solicitado (R$)</label>
+          <input type="text" id="valorSolicitado" placeholder="Ex: 150.000,00" oninput="formatMoney(this)">
+        </div>
+        <div class="field">
+          <label>📅 Nº de Parcelas</label>
+          <select id="parcelas">
+            <option value="">Selecione...</option>
+            <option value="3">3x</option><option value="6">6x</option>
+            <option value="12" selected>12x</option><option value="18">18x</option>
+            <option value="24">24x</option><option value="36">36x</option>
+            <option value="48">48x</option><option value="60">60x</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>📈 Taxa de Juros (% a.m.)</label>
+          <input type="text" id="juros" placeholder="Ex: 2,5" value="2,5">
+        </div>
+      </div>
+      <div id="parcelamento" style="margin-top:14px;font-size:13px;color:var(--muted)"></div>
+    </div>
+
+    <!-- STEP 2: CNPJ -->
+    <div class="card">
+      <div class="card-title">
+        <div class="step">2</div>
+        Dados da Empresa
+      </div>
+      <div class="card-subtitle">Informe o CNPJ para busca automática nas bases de dados</div>
+
+      <div class="cnpj-row">
+        <div class="field">
+          <label>🏢 CNPJ *</label>
+          <input type="text" id="cnpjInput" placeholder="00.000.000/0000-00" maxlength="18" oninput="maskCNPJ(this)" style="font-size:18px;letter-spacing:1px;font-family:'Syne',sans-serif">
+        </div>
+        <button class="btn-primary" onclick="puxarDados()" id="btnPuxar">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Puxar Dados
+        </button>
+      </div>
+
+      <div class="data-preview" id="dataPreview">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:14px">✅ Dados encontrados</strong>
+          <div class="source-tags" id="sourceTags"></div>
+        </div>
+        <div class="preview-grid" id="previewGrid"></div>
+        <div id="sociosSection" style="margin-top:16px;display:none">
+          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:8px">Quadro Societário</div>
+          <div id="sociosList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: COMPLEMENTAR -->
+    <div class="card">
+      <div class="card-title">
+        <div class="step">3</div>
+        Dados Complementares <span style="font-size:12px;color:var(--muted);font-family:var(--font-body);font-weight:400">(opcional)</span>
+      </div>
+      <div class="card-subtitle">Informações adicionais que enriquecem a análise de risco</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Faturamento Anual Declarado (R$)</label>
+          <input type="text" id="faturamento" placeholder="Ex: 1.200.000,00" oninput="formatMoney(this)">
+        </div>
+        <div class="field">
+          <label>Setor / Segmento</label>
+          <select id="setor">
+            <option value="">Selecione...</option>
+            <option>Comércio Varejista</option><option>Comércio Atacadista</option>
+            <option>Indústria</option><option>Serviços</option><option>Tecnologia</option>
+            <option>Construção Civil</option><option>Agronegócio</option>
+            <option>Saúde</option><option>Educação</option><option>Outro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Finalidade do Crédito</label>
+          <select id="finalidade">
+            <option value="">Selecione...</option>
+            <option>Capital de Giro</option><option>Expansão / Investimento</option>
+            <option>Compra de Equipamentos</option><option>Pagamento de Dívidas</option>
+            <option>Aquisição de Imóvel</option><option>Outro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Garantias Oferecidas</label>
+          <select id="garantias">
+            <option value="">Selecione...</option>
+            <option>Imóvel</option><option>Veículo</option>
+            <option>Recebíveis / Duplicatas</option><option>Aval do Sócio</option>
+            <option>Sem garantia</option><option>Outra</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label>Observações Adicionais</label>
+        <textarea id="observacoes" rows="3" placeholder="Informações relevantes sobre a empresa ou operação..."></textarea>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div style="display:flex;gap:16px;justify-content:flex-end;margin-top:8px">
+      <a href="/" class="btn-secondary">Cancelar</a>
+      <button class="btn-primary" onclick="analisar()" id="btnAnalisar" style="font-size:16px;padding:16px 40px">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        Gerar Análise Completa
+      </button>
+    </div>
+  </main>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner" style="width:40px;height:40px;border-width:3px"></div>
+  <div class="loading-text">Analisando empresa...</div>
+  <div class="loading-step" id="loadingStep">Buscando dados cadastrais</div>
+  <div style="margin-top:12px;background:rgba(30,41,59,0.8);border-radius:12px;padding:12px 24px;font-size:13px;color:var(--muted);text-align:center;max-width:400px;line-height:1.6">
+    Consultando APIs de dados abertos, processos judiciais e gerando análise por IA.<br>Isso pode levar até 30 segundos.
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-box" id="resultBox">
+    <button class="result-close" onclick="closeResult()">✕ Fechar</button>
+    <div id="resultContent"></div>
+  </div>
+</div>
+
+<script>
+let companyData = {};
+let consultaId = null;
+
+function maskCNPJ(el) {
+  let v = el.value.replace(/\D/g,'');
+  if(v.length>14) v=v.slice(0,14);
+  v = v.replace(/^(\d{2})(\d)/,'$1.$2');
+  v = v.replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3');
+  v = v.replace(/\.(\d{3})(\d)/,'.$1/$2');
+  v = v.replace(/(\d{4})(\d)/,'$1-$2');
+  el.value = v;
+  updateParcelamento();
+}
+
+function formatMoney(el) {
+  let v = el.value.replace(/\D/g,'');
+  if(!v) { el.value=''; return; }
+  v = (parseInt(v)/100).toFixed(2);
+  el.value = parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+}
+
+function getMoneyValue(id) {
+  const v = document.getElementById(id)?.value || '';
+  return parseFloat(v.replace(/\./g,'').replace(',','.')) || 0;
+}
+
+function updateParcelamento() {
+  const val = getMoneyValue('valorSolicitado');
+  const parc = parseInt(document.getElementById('parcelas').value) || 0;
+  const juros = parseFloat((document.getElementById('juros').value||'0').replace(',','.')) || 0;
+  const el = document.getElementById('parcelamento');
+  if(val && parc) {
+    let monthly;
+    const r = juros/100;
+    if(r > 0) monthly = val * r * Math.pow(1+r,parc) / (Math.pow(1+r,parc)-1);
+    else monthly = val/parc;
+    el.innerHTML = `💳 Parcela estimada: <strong style="color:var(--accent)">R$ ${monthly.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> — Total: <strong>R$ ${(monthly*parc).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong>`;
+  } else { el.innerHTML = ''; }
+}
+document.getElementById('parcelas').addEventListener('change', updateParcelamento);
+document.getElementById('juros').addEventListener('input', updateParcelamento);
+
+async function puxarDados() {
+  const cnpj = document.getElementById('cnpjInput').value;
+  const clean = cnpj.replace(/\D/g,'');
+  if(clean.length !== 14) { alert('CNPJ inválido. Verifique e tente novamente.'); return; }
+  
+  const btn = document.getElementById('btnPuxar');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Buscando...';
+  
+  try {
+    const res = await fetch('/api/fetch-cnpj', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cnpj: clean})
+    });
+    const data = await res.json();
+    
+    if(data.success) {
+      companyData = data.data;
+      renderPreview(data.data, data.sources);
+    } else {
+      alert('Erro ao buscar dados: ' + (data.error || 'Tente novamente.'));
+    }
+  } catch(e) {
+    alert('Erro de conexão ao buscar dados.');
+  }
+  
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> Puxar Dados';
+}
+
+function renderPreview(d, sources) {
+  const preview = document.getElementById('dataPreview');
+  preview.classList.add('show');
+  
+  // Source tags
+  const tagsHtml = Object.entries(sources).map(([k,v]) => 
+    `<span class="source-tag ${v?'ok':'err'}">${k}: ${v?'✓':'✗'}</span>`
+  ).join('');
+  document.getElementById('sourceTags').innerHTML = tagsHtml;
+  
+  const fields = [
+    ['Razão Social', d.razao_social],
+    ['Nome Fantasia', d.nome_fantasia],
+    ['Situação', d.situacao_cadastral],
+    ['Porte', d.porte_empresa || d.porte],
+    ['Capital Social', d.capital_social ? 'R$ '+d.capital_social : null],
+    ['Natureza Jurídica', d.natureza_juridica],
+    ['Início Atividade', d.data_inicio_atividade || d.abertura],
+    ['CNAE Principal', d.cnae_principal || d.cnae_fiscal],
+    ['Município/UF', d.municipio ? d.municipio+'/'+d.uf : null],
+    ['E-mail', d.email],
+    ['Endereço', d.logradouro ? `${d.logradouro}, ${d.numero} — ${d.bairro}` : null],
+    ['CEP', d.cep],
+  ].filter(([,v]) => v);
+  
+  document.getElementById('previewGrid').innerHTML = fields.map(([l,v]) => `
+    <div class="preview-item">
+      <label>${l}</label>
+      <span>${v}</span>
+    </div>
+  `).join('');
+  
+  // Socios
+  const qsa = d.QSA || d.qsa || [];
+  if(qsa.length) {
+    document.getElementById('sociosSection').style.display = 'block';
+    document.getElementById('sociosList').innerHTML = qsa.map(s => `
+      <div class="socio-card">
+        <div class="socio-name">${s.nome_socio || s.nome || 'N/D'}</div>
+        <div class="socio-meta">
+          ${s.qualificacao_socio || s.qualificacao || ''} 
+          ${s.faixa_etaria ? '· Faixa etária: '+s.faixa_etaria : ''}
+          ${s.data_entrada_sociedade ? '· Desde: '+s.data_entrada_sociedade : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+const loadingSteps = [
+  'Validando CNPJ...',
+  'Consultando OpenCNPJ...',
+  'Consultando Brasil API...',
+  'Verificando processos judiciais...',
+  'Analisando redes sociais...',
+  'Gerando score de risco...',
+  'Analisando com Inteligência Artificial...',
+  'Gerando relatório PDF...',
+];
+
+async function analisar() {
+  const cnpj = document.getElementById('cnpjInput').value.replace(/\D/g,'');
+  if(cnpj.length !== 14) { alert('Informe um CNPJ válido.'); return; }
+  
+  const valor = getMoneyValue('valorSolicitado');
+  if(!valor) { alert('Informe o valor solicitado.'); return; }
+  
+  const parcelas = parseInt(document.getElementById('parcelas').value);
+  if(!parcelas) { alert('Selecione o número de parcelas.'); return; }
+  
+  const juros = parseFloat((document.getElementById('juros').value||'0').replace(',','.'));
+  
+  // Loading
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('show');
+  
+  let stepIdx = 0;
+  const stepInterval = setInterval(() => {
+    if(stepIdx < loadingSteps.length) {
+      document.getElementById('loadingStep').textContent = loadingSteps[stepIdx++];
+    }
+  }, 2500);
+  
+  try {
+    const res = await fetch('/api/analisar', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        cnpj,
+        valor_solicitado: valor,
+        parcelas,
+        juros,
+        company_data: companyData,
+        complementar: {
+          faturamento: getMoneyValue('faturamento'),
+          setor: document.getElementById('setor').value,
+          finalidade: document.getElementById('finalidade').value,
+          garantias: document.getElementById('garantias').value,
+          observacoes: document.getElementById('observacoes').value,
+        }
+      })
+    });
+    const data = await res.json();
+    clearInterval(stepInterval);
+    overlay.classList.remove('show');
+    
+    if(data.success) {
+      consultaId = data.consulta_id;
+      renderResult(data, valor, parcelas, juros);
+    } else {
+      alert('Erro na análise: ' + (data.error||''));
+    }
+  } catch(e) {
+    clearInterval(stepInterval);
+    overlay.classList.remove('show');
+    alert('Erro de conexão: ' + e.message);
+  }
+}
+
+function renderResult(data, valor, parcelas, juros) {
+  const s = data.score;
+  const scoreColor = s.risco_color;
+  
+  const reasHtml = (s.reasons||[]).map(([icon,text,pts]) => `
+    <div class="reason-item">
+      <span class="reason-icon">${icon==='✓'?'✅':icon==='✗'?'❌':'⚠️'}</span>
+      <span>${text}</span>
+      <span class="reason-score" style="color:${pts>0?'var(--green)':'var(--red)'}">${pts>0?'+':''}${pts}</span>
+    </div>
+  `).join('');
+  
+  const razao = companyData.razao_social || document.getElementById('cnpjInput').value;
+  
+  document.getElementById('resultContent').innerHTML = `
+    <h2 style="font-family:var(--font-head);font-size:22px;font-weight:800;margin-bottom:24px">
+      Análise de Crédito — ${razao}
+    </h2>
+    
+    <div class="score-display">
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Score de Risco</div>
+      <div class="score-number" style="color:${scoreColor}">${s.score}</div>
+      <div class="score-label">de 100 pontos</div>
+      <div class="risco-badge" style="background:${scoreColor}22;color:${scoreColor};border:1px solid ${scoreColor}44">
+        RISCO ${s.risco}
+      </div>
+    </div>
+    
+    <div class="valor-sugerido-box">
+      <div class="label">💡 Valor Sugerido para Aprovação</div>
+      <div class="value">R$ ${s.valor_sugerido.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">
+        ${s.multiplicador*100}% do valor solicitado (R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})})
+      </div>
+    </div>
+    
+    <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Fatores Analisados</div>
+    <div class="reasons-list">${reasHtml}</div>
+    
+    <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">
+      🤖 Análise por Inteligência Artificial
+      <span id="iaBadge" style="margin-left:8px;font-size:11px;padding:3px 10px;border-radius:100px;background:rgba(99,102,241,0.15);color:#818cf8;font-weight:700;text-transform:none;letter-spacing:0"></span>
+    </div>
+    <div class="ai-analysis">${data.ai_analysis}</div>
+    
+    <div class="result-actions">
+      <a href="/relatorio/${data.consulta_id}" class="btn-primary" target="_blank">
+        📊 Ver Relatório Completo
+      </a>
+      ${data.has_pdf ? `<a href="/download-pdf/${data.consulta_id}" class="btn-secondary" download>
+        📄 Baixar PDF
+      </a>` : ''}
+      <a href="/" class="btn-secondary">🏠 Voltar ao Dashboard</a>
+    </div>
+  `;
+  
+  document.getElementById('resultOverlay').classList.add('show');
+  // Mostra qual IA foi usada
+  const badge = document.getElementById('iaBadge');
+  if (badge && data.ia_usada) badge.textContent = '⚡ ' + data.ia_usada;
+}
+
+function closeResult() {
+  document.getElementById('resultOverlay').classList.remove('show');
+}
+</script>
+</body>
+</html>

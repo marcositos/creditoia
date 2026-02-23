@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CréditoIA — Relatório #{{ consulta.id }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#040812; --surface:#0c1220; --surface2:#111827; --border:#1e293b;
+    --accent:#3b82f6; --accent2:#6366f1; --green:#10b981; --yellow:#f59e0b; --red:#ef4444;
+    --text:#e2e8f0; --muted:#64748b;
+    --font-head:'Syne',sans-serif; --font-body:'DM Sans',sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-body); }
+  body::before { content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0; }
+
+  .layout { display:flex; min-height:100vh; position:relative; z-index:1; }
+  .sidebar { width:260px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;left:0;top:0;bottom:0; }
+  .logo { padding:0 24px 32px;font-family:var(--font-head);font-size:22px;font-weight:800;letter-spacing:-0.5px; }
+  .logo span { color:var(--accent); }
+  .logo sub { font-size:10px;color:var(--muted);display:block;font-weight:400;margin-top:-4px; }
+  .nav a { display:flex;align-items:center;gap:12px;padding:12px 24px;color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:all 0.2s;border-left:3px solid transparent; }
+  .nav a:hover { color:var(--text);background:rgba(59,130,246,0.05); }
+  .nav a svg { width:18px;height:18px;flex-shrink:0; }
+  
+  .main { margin-left:260px;flex:1;padding:32px;max-width:900px; }
+  
+  .report-header { background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:20px;padding:36px;margin-bottom:24px;position:relative;overflow:hidden; }
+  .report-header::before { content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  .report-id { font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px; }
+  .report-title { font-family:var(--font-head);font-size:28px;font-weight:800;letter-spacing:-0.5px; }
+  .report-meta { display:flex;gap:24px;margin-top:16px;flex-wrap:wrap; }
+  .report-meta span { font-size:13px;color:var(--muted); }
+  .report-meta strong { color:var(--text); }
+
+  .score-hero { display:grid;grid-template-columns:auto 1fr;gap:24px;margin-bottom:24px; }
+  .score-circle { width:140px;height:140px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px solid; }
+  .score-circle-num { font-family:var(--font-head);font-size:40px;font-weight:800;line-height:1; }
+  .score-circle-label { font-size:11px;color:var(--muted);margin-top:2px; }
+  
+  .section { background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px; }
+  .section-title { font-family:var(--font-head);font-size:16px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px; }
+  
+  .info-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:12px; }
+  .info-item label { font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:3px; }
+  .info-item span { font-size:14px;font-weight:500; }
+  
+  .badge-risco { display:inline-block;padding:8px 24px;border-radius:100px;font-size:16px;font-weight:700;font-family:var(--font-head); }
+  
+  .reason-item { display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(30,41,59,0.5);font-size:13px; }
+  .reason-item:last-child { border-bottom:none; }
+  .reason-score { margin-left:auto;font-weight:700;flex-shrink:0; }
+  
+  .ai-text { font-size:14px;line-height:1.9;white-space:pre-wrap; }
+  
+  .valor-box { background:rgba(16,185,129,0.05);border:2px solid rgba(16,185,129,0.2);border-radius:12px;padding:24px;text-align:center;margin-bottom:20px; }
+  .valor-label { font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px; }
+  .valor-num { font-family:var(--font-head);font-size:48px;font-weight:800;color:var(--green);margin-top:4px; }
+  
+  .socio-card { background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px; }
+  .socio-name { font-size:14px;font-weight:600; }
+  .socio-meta { font-size:12px;color:var(--muted);margin-top:2px; }
+  
+  .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:white;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);text-decoration:none;display:inline-flex;align-items:center;gap:8px; }
+  .btn-secondary { background:none;border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);text-decoration:none;display:inline-flex;align-items:center;gap:8px; }
+  .btn-secondary:hover { border-color:var(--accent);color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">Crédito<span>IA</span><sub>Análise de Risco Empresarial</sub></div>
+    <nav class="nav">
+      <a href="/"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>Dashboard</a>
+      <a href="/nova-consulta"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Nova Consulta</a>
+    </nav>
+  </aside>
+  
+  <main class="main">
+    <div class="report-header">
+      <div class="report-id">Relatório de Análise de Crédito · ID #{{ consulta.id }}</div>
+      <div class="report-title">{{ consulta.razao_social or 'Empresa' }}</div>
+      <div class="report-meta">
+        <span>CNPJ: <strong>{{ consulta.cnpj }}</strong></span>
+        <span>Emitido em: <strong>{{ consulta.created_at }}</strong></span>
+        <span>Parcelas: <strong>{{ consulta.parcelas }}x</strong></span>
+        <span>Juros: <strong>{{ consulta.juros }}% a.m.</strong></span>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:12px">
+        <a href="/download-pdf/{{ consulta.id }}" class="btn-primary">📄 Baixar PDF Completo</a>
+        <a href="/nova-consulta" class="btn-secondary">+ Nova Consulta</a>
+      </div>
+    </div>
+    
+    <!-- SCORE -->
+    {% set score = consulta.score_empresa %}
+    {% set risco = consulta.risco %}
+    {% if risco == 'BAIXO' %}{% set color = '#10b981' %}
+    {% elif risco == 'MÉDIO' %}{% set color = '#f59e0b' %}
+    {% else %}{% set color = '#ef4444' %}{% endif %}
+    
+    <div class="section">
+      <div class="section-title">🎯 Score e Risco</div>
+      <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap">
+        <div class="score-circle" style="border-color:{{ color }};color:{{ color }}">
+          <div class="score-circle-num">{{ score }}</div>
+          <div class="score-circle-label">/ 100 pontos</div>
+        </div>
+        <div>
+          <div class="badge-risco" style="background:{{ color }}22;color:{{ color }};border:1px solid {{ color }}55">
+            RISCO {{ risco }}
+          </div>
+          <div style="margin-top:16px">
+            <div style="font-size:12px;color:var(--muted)">Valor Solicitado</div>
+            <div style="font-size:20px;font-weight:700">R$ {{ '{:,.2f}'.format(consulta.valor_solicitado or 0) }}</div>
+          </div>
+          <div style="margin-top:12px">
+            <div style="font-size:12px;color:var(--muted)">Valor Sugerido para Aprovação</div>
+            <div style="font-size:28px;font-weight:800;color:var(--green);font-family:var(--font-head)">
+              R$ {{ '{:,.2f}'.format(consulta.valor_sugerido or 0) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- EMPRESA -->
+    {% set company = dados.company %}
+    <div class="section">
+      <div class="section-title">🏢 Dados Cadastrais</div>
+      <div class="info-grid">
+        {% for label, key in [
+          ('Razão Social','razao_social'),('Nome Fantasia','nome_fantasia'),
+          ('Situação','situacao_cadastral'),('Porte','porte_empresa'),
+          ('Capital Social','capital_social'),('Natureza Jurídica','natureza_juridica'),
+          ('Início Atividade','data_inicio_atividade'),('CNAE Principal','cnae_principal'),
+          ('Município','municipio'),('UF','uf'),('CEP','cep'),('E-mail','email')
+        ] %}
+        {% if company.get(key) %}
+        <div class="info-item">
+          <label>{{ label }}</label>
+          <span>{{ company[key] }}</span>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    
+    <!-- QSA -->
+    {% set qsa = company.get('QSA') or company.get('qsa') or [] %}
+    {% if qsa %}
+    <div class="section">
+      <div class="section-title">👥 Quadro Societário</div>
+      {% for s in qsa %}
+      <div class="socio-card">
+        <div class="socio-name">{{ s.get('nome_socio') or s.get('nome','N/D') }}</div>
+        <div class="socio-meta">
+          {{ s.get('qualificacao_socio') or s.get('qualificacao','') }}
+          {% if s.get('faixa_etaria') %} · Faixa etária: {{ s.faixa_etaria }}{% endif %}
+          {% if s.get('data_entrada_sociedade') %} · Desde: {{ s.data_entrada_sociedade }}{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- AI ANALYSIS -->
+    {% if dados.ai %}
+    <div class="section">
+      <div class="section-title">🤖 Análise por Inteligência Artificial</div>
+      <div class="ai-text">{{ dados.ai }}</div>
+    </div>
+    {% endif %}
+    
+    <!-- JUDICIAL -->
+    <div class="section">
+      <div class="section-title">⚖️ Processos Judiciais</div>
+      {% set judicial = dados.judicial %}
+      {% if judicial and judicial.get('hits') %}
+        {% set total = judicial.hits.get('total',{}).get('value',0) %}
+        <p style="font-size:14px">Total de processos encontrados: <strong style="color:{% if total > 5 %}var(--red){% elif total > 0 %}var(--yellow){% else %}var(--green){% endif %}">{{ total }}</strong></p>
+      {% else %}
+        <p style="font-size:14px;color:var(--muted)">
+          {% if not dados.judicial %}Consulta judicial não executada (DataJud desabilitado ou sem autenticação).
+          {% else %}Nenhum processo judicial encontrado nas bases consultadas.{% endif %}
+        </p>
+      {% endif %}
+    </div>
+    
+    <!-- SOCIAL -->
+    <div class="section">
+      <div class="section-title">📱 Redes Sociais e Reputação</div>
+      <p style="font-size:13px;color:var(--muted)">
+        A análise de redes sociais requer configuração de acesso adicional via APIs oficiais 
+        (Instagram Graph API, LinkedIn API, Facebook Graph API). 
+        {% if dados.social and dados.social.get('nota') %}{{ dados.social.nota }}{% endif %}
+      </p>
+      {% if dados.social and dados.social.get('controversias') %}
+      <div style="margin-top:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:14px;color:var(--red)">
+        ⚠️ Controvérsias identificadas nas redes sociais. Verificação manual recomendada.
+      </div>
+      {% endif %}
+    </div>
+    
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <a href="/download-pdf/{{ consulta.id }}" class="btn-primary">📄 Baixar PDF</a>
+      <a href="/" class="btn-secondary">🏠 Dashboard</a>
+    </div>
+  </main>
+</div>
+</body>
+</html>

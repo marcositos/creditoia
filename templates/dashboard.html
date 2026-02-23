@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CréditoIA — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #040812;
+    --surface: #0c1220;
+    --surface2: #111827;
+    --border: #1e293b;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; }
+
+  /* Grid bg */
+  body::before {
+    content:'';position:fixed;inset:0;
+    background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none;z-index:0;
+  }
+
+  .layout { display:flex; min-height:100vh; position:relative; z-index:1; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width:260px; min-height:100vh; background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex; flex-direction:column; padding:24px 0;
+    position:fixed; left:0; top:0; bottom:0;
+  }
+  .logo {
+    padding:0 24px 32px;
+    font-family:var(--font-head); font-size:22px; font-weight:800;
+    letter-spacing:-0.5px;
+  }
+  .logo span { color:var(--accent); }
+  .logo sub { font-size:10px; color:var(--muted); display:block; font-weight:400; margin-top:-4px; }
+  
+  .nav { flex:1; }
+  .nav a {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 24px; color:var(--muted); text-decoration:none;
+    font-size:14px; font-weight:500; transition:all 0.2s;
+    border-left:3px solid transparent;
+  }
+  .nav a:hover { color:var(--text); background:rgba(59,130,246,0.05); }
+  .nav a.active { color:var(--accent); border-left-color:var(--accent); background:rgba(59,130,246,0.08); }
+  .nav a svg { width:18px; height:18px; flex-shrink:0; }
+
+  .sidebar-footer { padding:16px 24px; border-top:1px solid var(--border); }
+  .config-btn {
+    display:flex; align-items:center; gap:10px;
+    background:none; border:1px solid var(--border); border-radius:8px;
+    color:var(--muted); padding:10px 14px; cursor:pointer; width:100%;
+    font-size:13px; font-family:var(--font-body); transition:all 0.2s;
+  }
+  .config-btn:hover { color:var(--text); border-color:var(--accent); }
+
+  /* MAIN */
+  .main { margin-left:260px; flex:1; padding:32px; }
+
+  .page-header {
+    margin-bottom:32px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+  }
+  .page-header h1 { font-family:var(--font-head); font-size:28px; font-weight:800; letter-spacing:-0.5px; }
+  .page-header p { color:var(--muted); font-size:14px; margin-top:4px; }
+
+  .btn-primary {
+    background:linear-gradient(135deg, var(--accent), var(--accent2));
+    border:none; border-radius:10px; color:white; padding:12px 24px;
+    font-size:14px; font-weight:600; cursor:pointer; font-family:var(--font-body);
+    text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    transition:opacity 0.2s; box-shadow:0 4px 15px rgba(59,130,246,0.3);
+  }
+  .btn-primary:hover { opacity:0.9; }
+
+  /* STATS CARDS */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:24px; position:relative; overflow:hidden;
+  }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg, var(--c1), var(--c2));
+  }
+  .stat-card.blue { --c1:#3b82f6; --c2:#6366f1; }
+  .stat-card.green { --c1:#10b981; --c2:#059669; }
+  .stat-card.yellow { --c1:#f59e0b; --c2:#d97706; }
+  .stat-card.red { --c1:#ef4444; --c2:#dc2626; }
+  
+  .stat-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+  .stat-value { font-family:var(--font-head); font-size:36px; font-weight:800; margin-top:8px; letter-spacing:-1px; }
+  .stat-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* TABLE */
+  .section-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .section-header { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .section-header h2 { font-family:var(--font-head); font-size:16px; font-weight:700; }
+
+  table { width:100%; border-collapse:collapse; }
+  th { padding:12px 16px; text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; background:rgba(0,0,0,0.2); }
+  td { padding:14px 16px; font-size:13px; border-bottom:1px solid rgba(30,41,59,0.5); }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(59,130,246,0.03); }
+
+  .badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:4px 10px; border-radius:100px; font-size:11px; font-weight:600;
+  }
+  .badge::before { content:''; width:6px; height:6px; border-radius:50%; }
+  .badge.baixo { background:rgba(16,185,129,0.15); color:#10b981; }
+  .badge.baixo::before { background:#10b981; }
+  .badge.medio { background:rgba(245,158,11,0.15); color:#f59e0b; }
+  .badge.medio::before { background:#f59e0b; }
+  .badge.alto { background:rgba(239,68,68,0.15); color:#ef4444; }
+  .badge.alto::before { background:#ef4444; }
+
+  .score-pill {
+    display:inline-block; padding:3px 10px; border-radius:6px;
+    font-size:12px; font-weight:700; font-family:var(--font-head);
+  }
+
+  .empty-state { padding:60px; text-align:center; color:var(--muted); }
+  .empty-state svg { width:48px; height:48px; margin:0 auto 16px; opacity:0.3; display:block; }
+  .empty-state p { font-size:14px; }
+
+  /* ACTION BTNS */
+  .action-btn {
+    background:none; border:1px solid var(--border); border-radius:6px;
+    color:var(--muted); padding:5px 12px; font-size:12px; cursor:pointer;
+    font-family:var(--font-body); transition:all 0.2s; text-decoration:none; display:inline-block;
+  }
+  .action-btn:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* Modal */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:100; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:32px; width:640px; max-height:80vh; overflow-y:auto; }
+  .modal h2 { font-family:var(--font-head); font-size:20px; margin-bottom:24px; }
+  
+  .config-item { display:flex; align-items:center; gap:16px; padding:16px 0; border-bottom:1px solid var(--border); }
+  .config-item:last-child { border-bottom:none; }
+  .config-info { flex:1; }
+  .config-info strong { font-size:13px; display:block; }
+  .config-info small { font-size:11px; color:var(--muted); }
+  .config-input { flex:1; }
+  
+  input[type=text] {
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); padding:8px 12px; font-size:12px; font-family:var(--font-body);
+    width:100%;
+  }
+  input[type=text]:focus { outline:none; border-color:var(--accent); }
+
+  /* Toggle */
+  .toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .toggle-slider {
+    position:absolute; cursor:pointer; inset:0;
+    background:#1e293b; border-radius:100px; transition:0.3s;
+  }
+  .toggle-slider:before {
+    content:''; position:absolute; width:18px; height:18px;
+    background:var(--muted); border-radius:50%; left:3px; top:3px; transition:0.3s;
+  }
+  input:checked + .toggle-slider { background:rgba(59,130,246,0.2); }
+  input:checked + .toggle-slider:before { background:var(--accent); transform:translateX(20px); }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .stat-card, .section-card { animation:fadeIn 0.4s ease both; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      Crédito<span>IA</span>
+      <sub>Análise de Risco Empresarial</sub>
+    </div>
+    <nav class="nav">
+      <a href="/" class="active">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        Dashboard
+      </a>
+      <a href="/nova-consulta">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nova Consulta
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="config-btn" onclick="openConfig()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Configurações de API
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Visão geral das análises de crédito realizadas</p>
+      </div>
+      <a href="/nova-consulta" class="btn-primary">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nova Consulta
+      </a>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card blue">
+        <div class="stat-label">Total de Consultas</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub">análises realizadas</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Risco Baixo</div>
+        <div class="stat-value" id="statBaixo">—</div>
+        <div class="stat-sub">empresas aprovadas</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-label">Risco Médio</div>
+        <div class="stat-value" id="statMedio">—</div>
+        <div class="stat-sub">análise cautelosa</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Risco Alto</div>
+        <div class="stat-value" id="statAlto">—</div>
+        <div class="stat-sub">contraindicado</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header">
+        <h2>Consultas Recentes</h2>
+        <span style="font-size:12px;color:var(--muted)">Últimas 20 análises</span>
+      </div>
+
+      {% if consultas %}
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Empresa</th>
+            <th>CNPJ</th>
+            <th>Valor Solicitado</th>
+            <th>Score</th>
+            <th>Risco</th>
+            <th>Valor Sugerido</th>
+            <th>Data</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in consultas %}
+          <tr>
+            <td style="color:var(--muted);font-family:'Syne',sans-serif">#{{ c.id }}</td>
+            <td style="font-weight:500">{{ c.razao_social or '—' }}</td>
+            <td style="font-family:monospace;font-size:12px;color:var(--muted)">{{ c.cnpj }}</td>
+            <td>R$ {{ '{:,.2f}'.format(c.valor_solicitado or 0) }}</td>
+            <td>
+              <span class="score-pill" style="background:{% if c.score_empresa >= 75 %}rgba(16,185,129,0.15);color:#10b981{% elif c.score_empresa >= 50 %}rgba(245,158,11,0.15);color:#f59e0b{% else %}rgba(239,68,68,0.15);color:#ef4444{% endif %}">
+                {{ c.score_empresa }}/100
+              </span>
+            </td>
+            <td>
+              <span class="badge {% if c.risco == 'BAIXO' %}baixo{% elif c.risco == 'MÉDIO' %}medio{% else %}alto{% endif %}">
+                {{ c.risco }}
+              </span>
+            </td>
+            <td style="color:var(--green);font-weight:600">R$ {{ '{:,.2f}'.format(c.valor_sugerido or 0) }}</td>
+            <td style="font-size:12px;color:var(--muted)">{{ c.created_at }}</td>
+            <td>
+              <a href="/relatorio/{{ c.id }}" class="action-btn">Ver</a>
+              <a href="/download-pdf/{{ c.id }}" class="action-btn" style="margin-left:4px">PDF</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>Nenhuma consulta realizada ainda.<br>Clique em <strong style="color:var(--accent)">Nova Consulta</strong> para começar.</p>
+      </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <h2>⚙️ Configuração de APIs</h2>
+    <div id="configItems">Carregando...</div>
+    <div style="margin-top:24px;display:flex;gap:12px;justify-content:flex-end">
+      <button onclick="closeConfig()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:10px 20px;cursor:pointer;font-family:var(--font-body)">Cancelar</button>
+      <button onclick="saveConfig()" class="btn-primary">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const apiLabels = {
+  opencnpj:   { name: 'OpenCNPJ',        desc: 'api.opencnpj.org — dados cadastrais gratuitos' },
+  brasilapi:  { name: 'Brasil API',       desc: 'brasilapi.com.br — CNPJ e dados públicos' },
+  dadosgov:   { name: 'Dados.gov.br',     desc: 'Portal de dados abertos do governo federal' },
+  invertexto: { name: 'InverTexto',       desc: 'api.invertexto.com — dados enriquecidos (requer key)' },
+  cnpja:      { name: 'CNPJa',            desc: 'cnpja.com — dados completos, pago (requer key)' },
+  datajud:    { name: 'DataJud CNJ',      desc: 'Processos judiciais nacionais (requer token CNJ)' },
+  perplexity: { name: 'Perplexity AI ⚡', desc: 'Pesquisa web em tempo real + análise de reputação (requer key)' },
+  anthropic:  { name: 'Anthropic Claude', desc: 'IA para relatório final — usa resultado da Perplexity (requer key)' },
+};
+
+let configData = {};
+
+async function openConfig() {
+  document.getElementById('configModal').classList.add('open');
+  const res = await fetch('/api/config');
+  configData = await res.json();
+  renderConfig();
+}
+
+function closeConfig() {
+  document.getElementById('configModal').classList.remove('open');
+}
+
+function renderConfig() {
+  const html = Object.entries(apiLabels).map(([key, info]) => {
+    const cfg = configData[key] || { enabled: false, api_key: '' };
+    const needsKey = ['invertexto','cnpja','datajud','anthropic','perplexity'].includes(key);
+    return `<div class="config-item">
+      <div class="config-info">
+        <strong>${info.name}</strong>
+        <small>${info.desc}</small>
+      </div>
+      ${needsKey ? `<input type="text" placeholder="API Key" value="${cfg.api_key||''}" id="key_${key}" style="max-width:200px">` : '<div style="width:200px"></div>'}
+      <label class="toggle">
+        <input type="checkbox" id="tog_${key}" ${cfg.enabled ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>`;
+  }).join('');
+  document.getElementById('configItems').innerHTML = html;
+}
+
+async function saveConfig() {
+  const data = {};
+  Object.keys(apiLabels).forEach(key => {
+    const tog = document.getElementById('tog_'+key);
+    const keyInput = document.getElementById('key_'+key);
+    data[key] = { enabled: tog?.checked, api_key: keyInput?.value || '' };
+  });
+  await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  closeConfig();
+  alert('Configurações salvas!');
+}
+
+// Load stats
+async function loadStats() {
+  const r = await fetch('/api/stats');
+  const d = await r.json();
+  document.getElementById('statTotal').textContent = d.total;
+  document.getElementById('statBaixo').textContent = d.baixo;
+  document.getElementById('statMedio').textContent = d.medio;
+  document.getElementById('statAlto').textContent = d.alto;
+}
+loadStats();
+</script>
+</body>
+</html>
