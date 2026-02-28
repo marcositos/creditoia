@@ -8,16 +8,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #040812;
-    --surface: #0c1220;
-    --surface2: #111827;
-    --border: #1e293b;
-    --accent: #3b82f6;
-    --accent2: #6366f1;
-    --green: #10b981;
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --border: #d6dee8;
+    --accent: #0b5d4b;
+    --accent2: #0f766e;
+    --green: #0f9d74;
     --yellow: #f59e0b;
-    --red: #ef4444;
-    --text: #e2e8f0;
+    --red: #dc2626;
+    --text: #0f172a;
     --muted: #64748b;
     --font-head: 'Syne', sans-serif;
     --font-body: 'DM Sans', sans-serif;
@@ -28,9 +28,7 @@
   /* Grid bg */
   body::before {
     content:'';position:fixed;inset:0;
-    background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background: radial-gradient(circle at top right, rgba(15,118,110,0.08), transparent 45%);
     pointer-events:none;z-index:0;
   }
 
@@ -115,7 +113,7 @@
   .section-header h2 { font-family:var(--font-head); font-size:16px; font-weight:700; }
 
   table { width:100%; border-collapse:collapse; }
-  th { padding:12px 16px; text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; background:rgba(0,0,0,0.2); }
+  th { padding:12px 16px; text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; background:#f1f5f9; }
   td { padding:14px 16px; font-size:13px; border-bottom:1px solid rgba(30,41,59,0.5); }
   tr:last-child td { border-bottom:none; }
   tr:hover td { background:rgba(59,130,246,0.03); }
@@ -155,11 +153,34 @@
   .modal { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:32px; width:640px; max-height:80vh; overflow-y:auto; }
   .modal h2 { font-family:var(--font-head); font-size:20px; margin-bottom:24px; }
   
-  .config-item { display:flex; align-items:center; gap:16px; padding:16px 0; border-bottom:1px solid var(--border); }
+  .config-group {
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-bottom:12px;
+    background:#f8fafc;
+    overflow:hidden;
+  }
+  .config-group summary {
+    list-style:none;
+    cursor:pointer;
+    padding:14px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .config-group summary::-webkit-details-marker { display:none; }
+  .config-group-title { font-size:13px; font-weight:700; display:block; }
+  .config-group-desc { font-size:11px; color:var(--muted); display:block; margin-top:2px; }
+  .config-group-count { color:var(--muted); font-size:11px; }
+  .config-group-body { border-top:1px solid var(--border); padding:4px 16px 2px; }
+
+  .config-item { display:flex; align-items:center; gap:16px; padding:12px 0; border-bottom:1px solid rgba(30,41,59,0.5); }
   .config-item:last-child { border-bottom:none; }
   .config-info { flex:1; }
   .config-info strong { font-size:13px; display:block; }
-  .config-info small { font-size:11px; color:var(--muted); }
+  .config-info small { font-size:11px; color:var(--muted); display:block; }
+  .config-rank { color:var(--accent); font-family:var(--font-head); font-size:11px; font-weight:700; margin-bottom:4px; }
   .config-input { flex:1; }
   
   input[type=text] {
@@ -318,16 +339,36 @@
 </div>
 
 <script>
-const apiLabels = {
-  opencnpj:   { name: 'OpenCNPJ',        desc: 'api.opencnpj.org — dados cadastrais gratuitos' },
-  brasilapi:  { name: 'Brasil API',       desc: 'brasilapi.com.br — CNPJ e dados públicos' },
-  dadosgov:   { name: 'Dados.gov.br',     desc: 'Portal de dados abertos do governo federal' },
-  invertexto: { name: 'InverTexto',       desc: 'api.invertexto.com — dados enriquecidos (requer key)' },
-  cnpja:      { name: 'CNPJa',            desc: 'cnpja.com — dados completos, pago (requer key)' },
-  datajud:    { name: 'DataJud CNJ',      desc: 'Processos judiciais nacionais (requer token CNJ)' },
-  perplexity: { name: 'Perplexity AI ⚡', desc: 'Pesquisa web em tempo real + análise de reputação (requer key)' },
-  anthropic:  { name: 'Anthropic Claude', desc: 'IA para relatório final — usa resultado da Perplexity (requer key)' },
-};
+const apiCatalog = [
+  {
+    group: 'Dados empresariais (Brasil)',
+    groupDesc: 'Fontes principais para CNPJ e quadro societário. Priorize de cima para baixo.',
+    items: [
+      { key: 'cnpja', rank: 1, name: 'CNPJa', desc: 'cnpja.com — maior riqueza de campos para CNPJ (requer key)', needsKey: true },
+      { key: 'opencnpj', rank: 2, name: 'OpenCNPJ', desc: 'api.opencnpj.org — dados cadastrais gratuitos', needsKey: false },
+      { key: 'brasilapi', rank: 3, name: 'Brasil API', desc: 'brasilapi.com.br — CNPJ e dados públicos', needsKey: false },
+      { key: 'invertexto', rank: 4, name: 'InverTexto', desc: 'api.invertexto.com — enriquecimento de CNPJ (requer key)', needsKey: true },
+      { key: 'dadosgov', rank: 5, name: 'Dados.gov.br', desc: 'Portal de dados abertos do governo federal', needsKey: false },
+    ],
+  },
+  {
+    group: 'Jurídico e processos (Brasil)',
+    groupDesc: 'Consulta de processos judiciais e passivo legal.',
+    items: [
+      { key: 'datajud', rank: 1, name: 'DataJud CNJ', desc: 'Processos judiciais nacionais (requer token CNJ)', needsKey: true },
+    ],
+  },
+  {
+    group: 'Inteligência e reputação web',
+    groupDesc: 'Camada complementar para sumarização e contexto público.',
+    items: [
+      { key: 'perplexity', rank: 1, name: 'Perplexity AI ⚡', desc: 'Pesquisa web em tempo real + análise de reputação (requer key)', needsKey: true },
+      { key: 'anthropic', rank: 2, name: 'Anthropic Claude', desc: 'IA para relatório final com foco em síntese executiva (requer key)', needsKey: true },
+    ],
+  },
+];
+
+const allApiItems = apiCatalog.flatMap(({ items }) => items);
 
 let configData = {};
 
@@ -343,27 +384,41 @@ function closeConfig() {
 }
 
 function renderConfig() {
-  const html = Object.entries(apiLabels).map(([key, info]) => {
-    const cfg = configData[key] || { enabled: false, api_key: '' };
-    const needsKey = ['invertexto','cnpja','datajud','anthropic','perplexity'].includes(key);
-    return `<div class="config-item">
-      <div class="config-info">
-        <strong>${info.name}</strong>
-        <small>${info.desc}</small>
-      </div>
-      ${needsKey ? `<input type="text" placeholder="API Key" value="${cfg.api_key||''}" id="key_${key}" style="max-width:200px">` : '<div style="width:200px"></div>'}
-      <label class="toggle">
-        <input type="checkbox" id="tog_${key}" ${cfg.enabled ? 'checked' : ''}>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>`;
+  const html = apiCatalog.map((group, idx) => {
+    const sortedItems = [...group.items].sort((a, b) => a.rank - b.rank);
+    const itemsHtml = sortedItems.map((info) => {
+      const cfg = configData[info.key] || { enabled: false, api_key: '' };
+      return `<div class="config-item">
+        <div class="config-info">
+          <div class="config-rank">TOP ${info.rank}</div>
+          <strong>${info.name}</strong>
+          <small>${info.desc}</small>
+        </div>
+        ${info.needsKey ? `<input type="text" placeholder="API Key" value="${cfg.api_key||''}" id="key_${info.key}" style="max-width:220px">` : '<div style="width:220px"></div>'}
+        <label class="toggle">
+          <input type="checkbox" id="tog_${info.key}" ${cfg.enabled ? 'checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>`;
+    }).join('');
+
+    return `<details class="config-group" ${idx === 0 ? 'open' : ''}>
+      <summary>
+        <div>
+          <span class="config-group-title">${group.group}</span>
+          <span class="config-group-desc">${group.groupDesc}</span>
+        </div>
+        <span class="config-group-count">${group.items.length} APIs</span>
+      </summary>
+      <div class="config-group-body">${itemsHtml}</div>
+    </details>`;
   }).join('');
   document.getElementById('configItems').innerHTML = html;
 }
 
 async function saveConfig() {
   const data = {};
-  Object.keys(apiLabels).forEach(key => {
+  allApiItems.forEach(({ key }) => {
     const tog = document.getElementById('tog_'+key);
     const keyInput = document.getElementById('key_'+key);
     data[key] = { enabled: tog?.checked, api_key: keyInput?.value || '' };
