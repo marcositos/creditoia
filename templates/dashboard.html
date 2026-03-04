@@ -342,28 +342,51 @@
 const apiCatalog = [
   {
     group: 'Dados empresariais (Brasil)',
-    groupDesc: 'Fontes principais para CNPJ e quadro societário. Priorize de cima para baixo.',
+    groupDesc: 'CNPJ e dados cadastrais corporativos.',
     items: [
-      { key: 'cnpja', rank: 1, name: 'CNPJa', desc: 'cnpja.com — maior riqueza de campos para CNPJ (requer key)', needsKey: true },
-      { key: 'opencnpj', rank: 2, name: 'OpenCNPJ', desc: 'api.opencnpj.org — dados cadastrais gratuitos', needsKey: false },
-      { key: 'brasilapi', rank: 3, name: 'Brasil API', desc: 'brasilapi.com.br — CNPJ e dados públicos', needsKey: false },
-      { key: 'invertexto', rank: 4, name: 'InverTexto', desc: 'api.invertexto.com — enriquecimento de CNPJ (requer key)', needsKey: true },
-      { key: 'dadosgov', rank: 5, name: 'Dados.gov.br', desc: 'Portal de dados abertos do governo federal', needsKey: false },
+      { key: 'cnpja', rank: 1, name: 'CNPJa', desc: 'Base empresarial completa (requer key)', needsKey: true },
+      { key: 'opencnpj', rank: 2, name: 'OpenCNPJ', desc: 'Dados cadastrais gratuitos', needsKey: false },
+      { key: 'brasilapi', rank: 3, name: 'Brasil API', desc: 'Consulta CNPJ pública', needsKey: false },
+      { key: 'invertexto', rank: 4, name: 'InverTexto', desc: 'Enriquecimento empresarial (requer key)', needsKey: true },
+      { key: 'receitaws', rank: 5, name: 'ReceitaWS', desc: 'Consulta CNPJ complementar', needsKey: false },
+      { key: 'serpro', rank: 6, name: 'Serpro', desc: 'Integração oficial (requer credenciais)', needsKey: true },
+      { key: 'dadosgov', rank: 7, name: 'Dados.gov.br', desc: 'Bases abertas complementares', needsKey: false },
     ],
   },
   {
-    group: 'Jurídico e processos (Brasil)',
-    groupDesc: 'Consulta de processos judiciais e passivo legal.',
+    group: 'Jurídico e processos',
+    groupDesc: 'Passivo judicial e monitoramento legal.',
     items: [
-      { key: 'datajud', rank: 1, name: 'DataJud CNJ', desc: 'Processos judiciais nacionais (requer token CNJ)', needsKey: true },
+      { key: 'datajud', rank: 1, name: 'DataJud CNJ', desc: 'Processos nacionais (token opcional)', needsKey: true },
+      { key: 'jusbrasil', rank: 2, name: 'Jusbrasil API/Parcerias', desc: 'Monitoramento processual privado', needsKey: true },
+      { key: 'tribunais', rank: 3, name: 'Tribunais estaduais', desc: 'Integração regional por UF', needsKey: true },
     ],
   },
   {
-    group: 'Inteligência e reputação web',
-    groupDesc: 'Camada complementar para sumarização e contexto público.',
+    group: 'Contato e localização',
+    groupDesc: 'Validação de endereço e telefone.',
     items: [
-      { key: 'perplexity', rank: 1, name: 'Perplexity AI ⚡', desc: 'Pesquisa web em tempo real + análise de reputação (requer key)', needsKey: true },
-      { key: 'anthropic', rank: 2, name: 'Anthropic Claude', desc: 'IA para relatório final com foco em síntese executiva (requer key)', needsKey: true },
+      { key: 'viacep', rank: 1, name: 'ViaCEP', desc: 'Validação de CEP', needsKey: false },
+      { key: 'awesomeapi', rank: 2, name: 'AwesomeAPI CEP', desc: 'Fallback para CEP', needsKey: false },
+      { key: 'numverify', rank: 3, name: 'NumVerify', desc: 'Validação de telefone (requer key)', needsKey: true },
+    ],
+  },
+  {
+    group: 'Domínio e inteligência web',
+    groupDesc: 'Domínios, infraestrutura e reputação online.',
+    items: [
+      { key: 'whoisxml', rank: 1, name: 'WhoisXML API', desc: 'WHOIS/DNS para domínios (requer key)', needsKey: true },
+      { key: 'securitytrails', rank: 2, name: 'SecurityTrails', desc: 'DNS histórico e pivôs (requer key)', needsKey: true },
+      { key: 'hunter', rank: 3, name: 'Hunter', desc: 'E-mails corporativos (requer key)', needsKey: true },
+      { key: 'dropcontact', rank: 4, name: 'Dropcontact', desc: 'Enriquecimento de contatos (requer key)', needsKey: true },
+    ],
+  },
+  {
+    group: 'IA e sumarização',
+    groupDesc: 'Análise e resumo executivo final.',
+    items: [
+      { key: 'perplexity', rank: 1, name: 'Perplexity AI ⚡', desc: 'Pesquisa web e reputação (requer key)', needsKey: true },
+      { key: 'anthropic', rank: 2, name: 'Anthropic Claude', desc: 'Síntese final do relatório (requer key)', needsKey: true },
     ],
   },
 ];
