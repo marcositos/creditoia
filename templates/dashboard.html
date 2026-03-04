@@ -207,17 +207,6 @@
   @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   .stat-card, .section-card { animation:fadeIn 0.4s ease both; }
 
-  .catalog-toolbar { display:flex; gap:10px; margin:18px 0 10px; align-items:center; }
-  .catalog-toolbar input { flex:1; }
-  .catalog-note { font-size:11px; color:var(--muted); margin-bottom:8px; }
-  .catalog-table-wrap { border:1px solid var(--border); border-radius:10px; overflow:auto; max-height:360px; }
-  .catalog-table { width:100%; border-collapse:collapse; min-width:1100px; }
-  .catalog-table th, .catalog-table td { padding:8px 10px; border-bottom:1px solid var(--border); font-size:12px; vertical-align:top; }
-  .catalog-table th { position:sticky; top:0; background:var(--surface2); z-index:2; }
-  .catalog-table td input, .catalog-table td textarea { width:100%; font-size:11px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); }
-  .catalog-table td textarea { min-height:34px; resize:vertical; }
-  .save-pill { border:1px solid var(--border); border-radius:999px; padding:4px 8px; font-size:10px; color:var(--muted); }
-
 </style>
 </head>
 <body>
@@ -343,19 +332,6 @@
   <div class="modal">
     <h2>⚙️ Configuração de APIs</h2>
     <div id="configItems">Carregando...</div>
-    <div class="catalog-toolbar">
-      <input type="text" id="catalogSearch" placeholder="Buscar por nome, descrição, link..." oninput="renderOsintCatalog()">
-      <span class="save-pill">💾 Salvo em localStorage</span>
-    </div>
-    <div class="catalog-note">Catálogo de APIs (Brasil: Sim · Chave: todos). Edite links, cotas, API key e notas por linha.</div>
-    <div class="catalog-table-wrap">
-      <table class="catalog-table">
-        <thead>
-          <tr><th>Nome</th><th>Slug</th><th>Descrição</th><th>Calls grátis</th><th>Link</th><th>API Key</th><th>Notas</th></tr>
-        </thead>
-        <tbody id="catalogBody"></tbody>
-      </table>
-    </div>
     <div style="margin-top:24px;display:flex;gap:12px;justify-content:flex-end">
       <button onclick="closeConfig()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:10px 20px;cursor:pointer;font-family:var(--font-body)">Cancelar</button>
       <button onclick="saveConfig()" class="btn-primary">Salvar</button>
@@ -425,7 +401,6 @@ async function openConfig() {
   const res = await fetch('/api/config');
   configData = await res.json();
   renderConfig();
-  renderOsintCatalog();
 }
 
 function closeConfig() {
@@ -476,137 +451,6 @@ async function saveConfig() {
   alert('Configurações salvas!');
 }
 
-const osintCatalog = [
-  ['abuse.ch','abuse-ch','Verifica host/domínio/IP malicioso pelo Abuse.ch','Grátis (fair use; limite não divulgado)'],
-  ['AdGuard DNS','adguard-dns','Checa se host seria bloqueado pelo DNS AdGuard','Grátis (limite não divulgado)'],
-  ['Ahmia','ahmia','Busca no Ahmia (Tor) por menções ao alvo','Grátis (limite não divulgado)'],
-  ['AlienVault IP Reputation','alienvault-ip-reputation','Reputação de IP/bloco na base AlienVault','Grátis (limite não divulgado)'],
-  ['Amazon S3 Bucket Finder','amazon-s3-bucket-finder','Procura buckets S3 associados','Grátis (limite não divulgado)'],
-  ['Archive.org','archive-org','Consulta histórico no Wayback Machine','Grátis (limite não divulgado)'],
-  ['Azure Blob Finder','azure-blob-finder','Procura blobs Azure associados','Grátis (limite não divulgado)'],
-  ['BGPView','bgpview','Informações BGP/ASN/prefixos','Grátis (limite não divulgado)'],
-  ['BitcoinAbuse','bitcoinabuse','Verifica endereços BTC com denúncias','Grátis (limite não divulgado)'],
-  ['Blockchain','blockchain','Consulta saldo BTC via blockchain.info','Grátis (limite não divulgado)'],
-  ['blocklist.de','blocklist-de','Checa IP/bloco em blocklist.de','Grátis (limite não divulgado)'],
-  ['botvrij.eu','botvrij-eu','Checa domínio malicioso em botvrij.eu','Grátis (limite não divulgado)'],
-  ['Certificate Transparency','certificate-transparency','Coleta hostnames via crt.sh','Grátis (limite não divulgado)'],
-  ['CINS Army List','cins-army-list','Checa IP/bloco na CINS Army','Grátis (limite não divulgado)'],
-  ['CIRCL.LU','circl-lu','Consulta Passive DNS/SSL do CIRCL','Grátis (limite não divulgado)'],
-  ['CleanBrowsing.org','cleanbrowsing-org','Checa bloqueio DNS CleanBrowsing','Grátis (limite não divulgado)'],
-  ['CleanTalk Spam List','cleantalk-spam-list','Checa IP/bloco na lista de spam CleanTalk','Grátis (limite não divulgado)'],
-  ['CloudFlare DNS','cloudflare-dns','Checa bloqueio DNS Cloudflare','Grátis (limite não divulgado)'],
-  ['CoinBlocker Lists','coinblocker-lists','Checa domínio nas CoinBlocker lists','Grátis (limite não divulgado)'],
-  ['CommonCrawl','commoncrawl','Encontra URLs no índice CommonCrawl','Grátis (limite não divulgado)'],
-  ['Crobat API','crobat-api','Busca subdomínios via Crobat','Grátis (limite não divulgado)'],
-  ['CRXcavator','crxcavator','Busca extensões Chrome e risco','Grátis (limite não divulgado)'],
-  ['CyberCrime-Tracker.net','cybercrime-tracker-net','Checa domínio/IP malicioso','Grátis (limite não divulgado)'],
-  ['Debounce','debounce','Verifica e-mail descartável','Grátis (limite não divulgado)'],
-  ['Digital Ocean Space Finder','digital-ocean-space-finder','Procura Spaces associados','Grátis (limite não divulgado)'],
-  ['DNS for Family','dns-for-family','Checa bloqueio DNS for Family','Grátis (limite não divulgado)'],
-  ['DNSDumpster','dnsdumpster','Enumeração passiva de subdomínios','50 queries/dia; 50 resultados/query'],
-  ['DNSGrep','dnsgrep','Passive DNS Rapid7 Sonar','Grátis (limite não divulgado)'],
-  ['DroneBL','dronebl','Consulta open relays/proxies','Grátis (limite não divulgado)'],
-  ['DuckDuckGo','duckduckgo','Consulta descritiva via API','Grátis (limite não divulgado)'],
-  ['EmailFormat','emailformat','Busca padrões de e-mail','Grátis (limite não divulgado)'],
-  ['Emerging Threats','emerging-threats','Checa IP/bloco malicioso','Grátis (limite não divulgado)'],
-  ['Etherscan','etherscan','Consulta saldo Ethereum','Grátis (limite não divulgado)'],
-  ['FortiGuard Antispam','fortiguard-antispam','Checa IP malicioso','Grátis (limite não divulgado)'],
-  ['Github','github','Identifica repositórios públicos associados','Grátis (limite não divulgado)'],
-  ['Google Object Storage Finder','google-object-storage-finder','Procura buckets GCS','Grátis (limite não divulgado)'],
-  ['Google SafeBrowsing','google-safebrowsing','Checa URL em safebrowsing','Grátis (limite não divulgado)'],
-  ['Gravatar','gravatar','Recupera informações via Gravatar','Grátis (limite não divulgado)'],
-  ['Greensnow','greensnow','Checa IP/bloco malicioso','Grátis (limite não divulgado)'],
-  ['grep.app','grep-app','Busca código por menções','Grátis (limite não divulgado)'],
-  ['HackerOne (Unofficial)','hackerone-unofficial','Verifica listagem em h1.nobbd.de','Grátis (limite não divulgado)'],
-  ['HackerTarget','hackertarget','Consultas OSINT (reverse IP etc.)','~50 calls/dia; alguns endpoints 20/dia'],
-  ['Hybrid Analysis','hybrid-analysis','Busca domínios/URLs relacionados','Grátis (limite não divulgado)'],
-  ['Internet Storm Center','internet-storm-center','Checa IP malicioso SANS ISC','Grátis (limite não divulgado)'],
-  ['LeakIX','leakix','Busca vazamentos/serviços expostos','Grátis (limite não divulgado)'],
-  ['Leak-Lookup','leak-lookup','Busca base de vazamentos','Grátis (limite não divulgado)'],
-  ['Maltiverse','maltiverse','Reputação de indicadores','Grátis (limite não divulgado)'],
-  ['Mnemonic PassiveDNS','mnemonic-passivedns','Obtém Passive DNS','Grátis (limite não divulgado)'],
-  ['multiproxy.org Open Proxies','multiproxy-org-open-proxies','Checa lista de proxies abertos','Grátis (limite não divulgado)'],
-  ['Onion.link','onion-link','Busca menções no Tor','Grátis (limite não divulgado)'],
-  ['Onionsearchengine.com','onionsearchengine-com','Busca menções no Tor','Grátis (limite não divulgado)'],
-  ['Open Bug Bounty','open-bug-bounty','Checa alvo no Open Bug Bounty','Grátis (limite não divulgado)'],
-  ['OpenDNS','opendns','Checa bloqueio DNS OpenDNS','Grátis (limite não divulgado)'],
-  ['OpenNIC DNS','opennic-dns','Resolve nomes via OpenNIC','Grátis (limite não divulgado)'],
-  ['OpenPhish','openphish','Checa phishing em OpenPhish','Grátis (limite não divulgado)'],
-  ['OpenStreetMap','openstreetmap','Geocodificação/lat-long','Grátis (limite não divulgado)'],
-  ['PhishStats','phishstats','Checa IP/bloco malicioso','Grátis (limite não divulgado)'],
-  ['PhishTank','phishtank','Checa host/domínio phishing','Grátis (limite não divulgado)'],
-  ['Project Honey Pot','project-honey-pot','Reputação de IP','Grátis (limite não divulgado)'],
-  ['Psbdmp','psbdmp','Consulta e-mails/domínios vazados','Grátis (limite não divulgado)'],
-  ['PunkSpider','punkspider','Checa vulnerabilidade do alvo','Grátis (limite não divulgado)'],
-  ['Quad9','quad9','Checa bloqueio DNS Quad9','Grátis (limite não divulgado)'],
-  ['ReverseWhois','reversewhois','Reverse WHOIS','Grátis (limite não divulgado)'],
-  ['RIPE','ripe','Netblocks/ASNs e registro','Grátis (limite não divulgado)'],
-  ['Robtex','robtex','Co-hosting e DNS/IP','Grátis (limite não divulgado)'],
-  ['searchcode','searchcode','Busca repositórios por menção','Grátis (limite não divulgado)'],
-  ['Skymem','skymem','Busca e-mails','Grátis (limite não divulgado)'],
-  ['SORBS','sorbs','Consulta relays/proxies/hosts vulneráveis','Grátis (limite não divulgado)'],
-  ['SpamCop','spamcop','Checa IP/bloco na base SpamCop','Grátis (limite não divulgado)'],
-  ['Spamhaus Zen','spamhaus-zen','Checa IP/bloco na Spamhaus ZEN','Grátis (limite não divulgado)'],
-  ['Steven Black Hosts','steven-black-hosts','Checa domínio em lista hosts','Grátis (limite não divulgado)'],
-  ['Sublist3r PassiveDNS','sublist3r-passivedns','Enumeração passiva de subdomínios','Grátis (limite não divulgado)'],
-  ['SURBL','surbl','Checa IP/domínio na SURBL','Grátis (limite não divulgado)'],
-  ['Talos Intelligence','talos-intelligence','Checa IP/bloco malicioso Cisco Talos','Grátis (limite não divulgado)'],
-  ['ThreatCrowd','threatcrowd','Enriquecimento de IOC','Grátis (limite não divulgado)'],
-  ['ThreatFox','threatfox','Checa IP malicioso Abuse.ch','Grátis (fair use; limite não divulgado)'],
-  ['ThreatMiner','threatminer','Passive DNS e threat intel','Grátis (limite não divulgado)'],
-  ['Trumail','trumail','Verifica e-mail descartável','Grátis (limite não divulgado)'],
-  ['Twitter','twitter','Coleta nome/localização de perfis','Grátis (limite não divulgado)'],
-  ['UCEPROTECT','uceprotect','Checa IP/bloco na UCEPROTECT','Grátis (limite não divulgado)'],
-  ['URLScan.io','urlscan-io','Scans e inteligência de URLs/domínios','Search 500/dia; retrieve 500/dia; public scans 2500/dia'],
-  ['VoIP Blacklist (VoIPBL)','voip-blacklist-voipbl','Checa IP/bloco malicioso VoIPBL','Grátis (limite não divulgado)'],
-  ['VXVault.net','vxvault-net','Checa domínio/IP malicioso','Grátis (limite não divulgado)'],
-  ['WiGLE','wigle','Consulta dados de Wi-Fi/APs','Grátis (limite não divulgado)'],
-  ['Wikileaks','wikileaks','Busca menções de domínios/e-mails','Grátis (limite não divulgado)'],
-  ['Wikipedia Edits','wikipedia-edits','Edições Wikipédia por IP/username','Grátis (limite não divulgado)'],
-  ['Yandex DNS','yandex-dns','Checa bloqueio DNS Yandex','Grátis (limite não divulgado)'],
-  ['Zone-H Defacement Check','zone-h-defacement-check','Checa registros/feed Zone-H','Grátis (limite não divulgado)'],
-  ['abuse.ch','abusech','Reputação/feeds de malware e IOC','Grátis (fair use)'],
-  ['URLScan.io','urlscan','Scans/OSINT de URLs e domínios','Grátis (quota por ação)'],
-].map(([name, slug, desc, freeCalls]) => ({ name, slug, desc, freeCalls, brasil: 'Sim', requiresKey: 'Sim' }));
-
-const catalogStorageKey = 'creditoia_api_catalog_rows_v1';
-
-function loadCatalogRows() {
-  const persisted = JSON.parse(localStorage.getItem(catalogStorageKey) || '{}');
-  return osintCatalog.map((row) => ({
-    ...row,
-    link: persisted[row.slug]?.link || '',
-    apiKey: persisted[row.slug]?.apiKey || '',
-    notes: persisted[row.slug]?.notes || '',
-  }));
-}
-
-function persistCatalogCell(slug, field, value) {
-  const persisted = JSON.parse(localStorage.getItem(catalogStorageKey) || '{}');
-  persisted[slug] = persisted[slug] || {};
-  persisted[slug][field] = value;
-  localStorage.setItem(catalogStorageKey, JSON.stringify(persisted));
-}
-
-function renderOsintCatalog() {
-  const q = (document.getElementById('catalogSearch')?.value || '').toLowerCase().trim();
-  const rows = loadCatalogRows().filter((r) => {
-    const hay = `${r.name} ${r.slug} ${r.desc} ${r.freeCalls} ${r.link} ${r.notes}`.toLowerCase();
-    return !q || hay.includes(q);
-  });
-
-  document.getElementById('catalogBody').innerHTML = rows.map((r) => `
-    <tr>
-      <td><strong>${r.name}</strong><br><small>${r.brasil}</small></td>
-      <td>${r.slug}</td>
-      <td>${r.desc}</td>
-      <td>${r.freeCalls}</td>
-      <td><input type="text" placeholder="https://..." value="${r.link || ''}" oninput="persistCatalogCell('${r.slug}','link', this.value)"></td>
-      <td><input type="text" placeholder="API key" value="${r.apiKey || ''}" oninput="persistCatalogCell('${r.slug}','apiKey', this.value)"></td>
-      <td><textarea placeholder="Notas" oninput="persistCatalogCell('${r.slug}','notes', this.value)">${r.notes || ''}</textarea></td>
-    </tr>
-  `).join('');
-}
 
 // Load stats
 async function loadStats() {
