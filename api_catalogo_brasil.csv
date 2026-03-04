@@ -1,0 +1,19 @@
+bloco,rank,provider,cobertura,descricao,resumo_uso,similaridade_com_topo
+Dados empresariais (Brasil),1,CNPJa,BR,Base mais completa para CNPJ com dados cadastrais e enriquecimento,API principal para identificação empresarial,100
+Dados empresariais (Brasil),2,OpenCNPJ,BR,Dados cadastrais públicos com boa cobertura para validação,API de redundância primária ao topo,92
+Dados empresariais (Brasil),3,Brasil API,BR,Consulta CNPJ e dados públicos normalizados,API de redundância secundária para cross-check,88
+Dados empresariais (Brasil),4,InverTexto,BR,Enriquecimento de dados empresariais via token,Complemento para campos adicionais,81
+Dados empresariais (Brasil),5,Dados.gov.br,BR,Catálogo federal de dados abertos com bases diversas,Suporte e fallback de bases abertas,70
+Jurídico e processos (Brasil),1,DataJud CNJ,BR,Consulta nacional de processos judiciais e metadados legais,API principal de risco judicial,100
+Jurídico e processos (Brasil),2,Jusbrasil API/Parcerias,BR,Integrações privadas para monitoramento processual,Redundância quando houver parceria comercial,84
+Jurídico e processos (Brasil),3,Tribunais estaduais (APIs próprias),BR,Fontes diretas por tribunal com cobertura regional,Complemento regional quando DataJud não cobre,75
+Contato e localização (Brasil),1,ViaCEP,BR,Normalização de CEP e endereço sem custo,Validação e normalização de endereço,100
+Contato e localização (Brasil),2,AwesomeAPI CEP,BR,Consulta de CEP com fallback rápido,Backup para validação de endereço,89
+Contato e localização (Brasil),3,NumVerify/Telco API com BR forte,BR+,Validação de telefone e tipo de linha,Classificação celular/fixo e saneamento,78
+Identidade fiscal (Brasil),1,ReceitaWS/CNPJ endpoints parceiros,BR,Validação fiscal e status cadastral empresarial,Confirmação fiscal complementar,100
+Identidade fiscal (Brasil),2,Serpro/Integrações homologadas,BR,Serviços oficiais mediante contrato e compliance,Alta confiabilidade para ambiente enterprise,86
+Domínio e presença web,1,WhoisXML API,Global+,WHOIS e DNS para domínios com bom suporte global,Mapear ativos de domínio associados,100
+Domínio e presença web,2,SecurityTrails,Global+,DNS histórico e pivôs por infraestrutura,Expansão em investigações de domínio,87
+Domínio e presença web,3,Hunter/Dropcontact,Global+,Descoberta e validação de emails corporativos,Enriquecer contatos profissionais,80
+Inteligência e sumarização,1,Perplexity API,Global+,Pesquisa web em tempo real com citações,Contexto reputacional e fatos recentes,100
+Inteligência e sumarização,2,Anthropic Claude API,Global+,Síntese e análise final com instruções controladas,Geração de relatório executivo final,90

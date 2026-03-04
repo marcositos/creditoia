@@ -8,16 +8,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #040812;
-    --surface: #0c1220;
-    --surface2: #111827;
-    --border: #1e293b;
-    --accent: #3b82f6;
-    --accent2: #6366f1;
-    --green: #10b981;
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --border: #d6dee8;
+    --accent: #0b5d4b;
+    --accent2: #0f766e;
+    --green: #0f9d74;
     --yellow: #f59e0b;
-    --red: #ef4444;
-    --text: #e2e8f0;
+    --red: #dc2626;
+    --text: #0f172a;
     --muted: #64748b;
     --font-head: 'Syne', sans-serif;
     --font-body: 'DM Sans', sans-serif;
@@ -28,9 +28,7 @@
   /* Grid bg */
   body::before {
     content:'';position:fixed;inset:0;
-    background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background: radial-gradient(circle at top right, rgba(15,118,110,0.08), transparent 45%);
     pointer-events:none;z-index:0;
   }
 
@@ -115,7 +113,7 @@
   .section-header h2 { font-family:var(--font-head); font-size:16px; font-weight:700; }
 
   table { width:100%; border-collapse:collapse; }
-  th { padding:12px 16px; text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; background:rgba(0,0,0,0.2); }
+  th { padding:12px 16px; text-align:left; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; background:#f1f5f9; }
   td { padding:14px 16px; font-size:13px; border-bottom:1px solid rgba(30,41,59,0.5); }
   tr:last-child td { border-bottom:none; }
   tr:hover td { background:rgba(59,130,246,0.03); }
@@ -155,11 +153,34 @@
   .modal { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:32px; width:640px; max-height:80vh; overflow-y:auto; }
   .modal h2 { font-family:var(--font-head); font-size:20px; margin-bottom:24px; }
   
-  .config-item { display:flex; align-items:center; gap:16px; padding:16px 0; border-bottom:1px solid var(--border); }
+  .config-group {
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-bottom:12px;
+    background:#f8fafc;
+    overflow:hidden;
+  }
+  .config-group summary {
+    list-style:none;
+    cursor:pointer;
+    padding:14px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .config-group summary::-webkit-details-marker { display:none; }
+  .config-group-title { font-size:13px; font-weight:700; display:block; }
+  .config-group-desc { font-size:11px; color:var(--muted); display:block; margin-top:2px; }
+  .config-group-count { color:var(--muted); font-size:11px; }
+  .config-group-body { border-top:1px solid var(--border); padding:4px 16px 2px; }
+
+  .config-item { display:flex; align-items:center; gap:16px; padding:12px 0; border-bottom:1px solid rgba(30,41,59,0.5); }
   .config-item:last-child { border-bottom:none; }
   .config-info { flex:1; }
   .config-info strong { font-size:13px; display:block; }
-  .config-info small { font-size:11px; color:var(--muted); }
+  .config-info small { font-size:11px; color:var(--muted); display:block; }
+  .config-rank { color:var(--accent); font-family:var(--font-head); font-size:11px; font-weight:700; margin-bottom:4px; }
   .config-input { flex:1; }
   
   input[type=text] {
@@ -185,6 +206,18 @@
 
   @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   .stat-card, .section-card { animation:fadeIn 0.4s ease both; }
+
+  .catalog-toolbar { display:flex; gap:10px; margin:18px 0 10px; align-items:center; }
+  .catalog-toolbar input { flex:1; }
+  .catalog-note { font-size:11px; color:var(--muted); margin-bottom:8px; }
+  .catalog-table-wrap { border:1px solid var(--border); border-radius:10px; overflow:auto; max-height:360px; }
+  .catalog-table { width:100%; border-collapse:collapse; min-width:1100px; }
+  .catalog-table th, .catalog-table td { padding:8px 10px; border-bottom:1px solid var(--border); font-size:12px; vertical-align:top; }
+  .catalog-table th { position:sticky; top:0; background:var(--surface2); z-index:2; }
+  .catalog-table td input, .catalog-table td textarea { width:100%; font-size:11px; padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); }
+  .catalog-table td textarea { min-height:34px; resize:vertical; }
+  .save-pill { border:1px solid var(--border); border-radius:999px; padding:4px 8px; font-size:10px; color:var(--muted); }
+
 </style>
 </head>
 <body>
@@ -310,6 +343,19 @@
   <div class="modal">
     <h2>⚙️ Configuração de APIs</h2>
     <div id="configItems">Carregando...</div>
+    <div class="catalog-toolbar">
+      <input type="text" id="catalogSearch" placeholder="Buscar por nome, descrição, link..." oninput="renderOsintCatalog()">
+      <span class="save-pill">💾 Salvo em localStorage</span>
+    </div>
+    <div class="catalog-note">Catálogo de APIs (Brasil: Sim · Chave: todos). Edite links, cotas, API key e notas por linha.</div>
+    <div class="catalog-table-wrap">
+      <table class="catalog-table">
+        <thead>
+          <tr><th>Nome</th><th>Slug</th><th>Descrição</th><th>Calls grátis</th><th>Link</th><th>API Key</th><th>Notas</th></tr>
+        </thead>
+        <tbody id="catalogBody"></tbody>
+      </table>
+    </div>
     <div style="margin-top:24px;display:flex;gap:12px;justify-content:flex-end">
       <button onclick="closeConfig()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:10px 20px;cursor:pointer;font-family:var(--font-body)">Cancelar</button>
       <button onclick="saveConfig()" class="btn-primary">Salvar</button>
@@ -318,16 +364,59 @@
 </div>
 
 <script>
-const apiLabels = {
-  opencnpj:   { name: 'OpenCNPJ',        desc: 'api.opencnpj.org — dados cadastrais gratuitos' },
-  brasilapi:  { name: 'Brasil API',       desc: 'brasilapi.com.br — CNPJ e dados públicos' },
-  dadosgov:   { name: 'Dados.gov.br',     desc: 'Portal de dados abertos do governo federal' },
-  invertexto: { name: 'InverTexto',       desc: 'api.invertexto.com — dados enriquecidos (requer key)' },
-  cnpja:      { name: 'CNPJa',            desc: 'cnpja.com — dados completos, pago (requer key)' },
-  datajud:    { name: 'DataJud CNJ',      desc: 'Processos judiciais nacionais (requer token CNJ)' },
-  perplexity: { name: 'Perplexity AI ⚡', desc: 'Pesquisa web em tempo real + análise de reputação (requer key)' },
-  anthropic:  { name: 'Anthropic Claude', desc: 'IA para relatório final — usa resultado da Perplexity (requer key)' },
-};
+const apiCatalog = [
+  {
+    group: 'Dados empresariais (Brasil)',
+    groupDesc: 'CNPJ e dados cadastrais corporativos.',
+    items: [
+      { key: 'cnpja', rank: 1, name: 'CNPJa', desc: 'Base empresarial completa (requer key)', needsKey: true },
+      { key: 'opencnpj', rank: 2, name: 'OpenCNPJ', desc: 'Dados cadastrais gratuitos', needsKey: false },
+      { key: 'brasilapi', rank: 3, name: 'Brasil API', desc: 'Consulta CNPJ pública', needsKey: false },
+      { key: 'invertexto', rank: 4, name: 'InverTexto', desc: 'Enriquecimento empresarial (requer key)', needsKey: true },
+      { key: 'receitaws', rank: 5, name: 'ReceitaWS', desc: 'Consulta CNPJ complementar', needsKey: false },
+      { key: 'serpro', rank: 6, name: 'Serpro', desc: 'Integração oficial (requer credenciais)', needsKey: true },
+      { key: 'dadosgov', rank: 7, name: 'Dados.gov.br', desc: 'Bases abertas complementares', needsKey: false },
+    ],
+  },
+  {
+    group: 'Jurídico e processos',
+    groupDesc: 'Passivo judicial e monitoramento legal.',
+    items: [
+      { key: 'datajud', rank: 1, name: 'DataJud CNJ', desc: 'Processos nacionais (token opcional)', needsKey: true },
+      { key: 'jusbrasil', rank: 2, name: 'Jusbrasil API/Parcerias', desc: 'Monitoramento processual privado', needsKey: true },
+      { key: 'tribunais', rank: 3, name: 'Tribunais estaduais', desc: 'Integração regional por UF', needsKey: true },
+    ],
+  },
+  {
+    group: 'Contato e localização',
+    groupDesc: 'Validação de endereço e telefone.',
+    items: [
+      { key: 'viacep', rank: 1, name: 'ViaCEP', desc: 'Validação de CEP', needsKey: false },
+      { key: 'awesomeapi', rank: 2, name: 'AwesomeAPI CEP', desc: 'Fallback para CEP', needsKey: false },
+      { key: 'numverify', rank: 3, name: 'NumVerify', desc: 'Validação de telefone (requer key)', needsKey: true },
+    ],
+  },
+  {
+    group: 'Domínio e inteligência web',
+    groupDesc: 'Domínios, infraestrutura e reputação online.',
+    items: [
+      { key: 'whoisxml', rank: 1, name: 'WhoisXML API', desc: 'WHOIS/DNS para domínios (requer key)', needsKey: true },
+      { key: 'securitytrails', rank: 2, name: 'SecurityTrails', desc: 'DNS histórico e pivôs (requer key)', needsKey: true },
+      { key: 'hunter', rank: 3, name: 'Hunter', desc: 'E-mails corporativos (requer key)', needsKey: true },
+      { key: 'dropcontact', rank: 4, name: 'Dropcontact', desc: 'Enriquecimento de contatos (requer key)', needsKey: true },
+    ],
+  },
+  {
+    group: 'IA e sumarização',
+    groupDesc: 'Análise e resumo executivo final.',
+    items: [
+      { key: 'perplexity', rank: 1, name: 'Perplexity AI ⚡', desc: 'Pesquisa web e reputação (requer key)', needsKey: true },
+      { key: 'anthropic', rank: 2, name: 'Anthropic Claude', desc: 'Síntese final do relatório (requer key)', needsKey: true },
+    ],
+  },
+];
+
+const allApiItems = apiCatalog.flatMap(({ items }) => items);
 
 let configData = {};
 
@@ -336,6 +425,7 @@ async function openConfig() {
   const res = await fetch('/api/config');
   configData = await res.json();
   renderConfig();
+  renderOsintCatalog();
 }
 
 function closeConfig() {
@@ -343,34 +433,179 @@ function closeConfig() {
 }
 
 function renderConfig() {
-  const html = Object.entries(apiLabels).map(([key, info]) => {
-    const cfg = configData[key] || { enabled: false, api_key: '' };
-    const needsKey = ['invertexto','cnpja','datajud','anthropic','perplexity'].includes(key);
-    return `<div class="config-item">
-      <div class="config-info">
-        <strong>${info.name}</strong>
-        <small>${info.desc}</small>
-      </div>
-      ${needsKey ? `<input type="text" placeholder="API Key" value="${cfg.api_key||''}" id="key_${key}" style="max-width:200px">` : '<div style="width:200px"></div>'}
-      <label class="toggle">
-        <input type="checkbox" id="tog_${key}" ${cfg.enabled ? 'checked' : ''}>
-        <span class="toggle-slider"></span>
-      </label>
-    </div>`;
+  const html = apiCatalog.map((group, idx) => {
+    const sortedItems = [...group.items].sort((a, b) => a.rank - b.rank);
+    const itemsHtml = sortedItems.map((info) => {
+      const cfg = configData[info.key] || { enabled: false, api_key: '' };
+      return `<div class="config-item">
+        <div class="config-info">
+          <div class="config-rank">TOP ${info.rank}</div>
+          <strong>${info.name}</strong>
+          <small>${info.desc}</small>
+        </div>
+        ${info.needsKey ? `<input type="text" placeholder="API Key" value="${cfg.api_key||''}" id="key_${info.key}" style="max-width:220px">` : '<div style="width:220px"></div>'}
+        <label class="toggle">
+          <input type="checkbox" id="tog_${info.key}" ${cfg.enabled ? 'checked' : ''}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>`;
+    }).join('');
+
+    return `<details class="config-group" ${idx === 0 ? 'open' : ''}>
+      <summary>
+        <div>
+          <span class="config-group-title">${group.group}</span>
+          <span class="config-group-desc">${group.groupDesc}</span>
+        </div>
+        <span class="config-group-count">${group.items.length} APIs</span>
+      </summary>
+      <div class="config-group-body">${itemsHtml}</div>
+    </details>`;
   }).join('');
   document.getElementById('configItems').innerHTML = html;
 }
 
 async function saveConfig() {
   const data = {};
-  Object.keys(apiLabels).forEach(key => {
+  allApiItems.forEach(({ key }) => {
     const tog = document.getElementById('tog_'+key);
     const keyInput = document.getElementById('key_'+key);
     data[key] = { enabled: tog?.checked, api_key: keyInput?.value || '' };
   });
   await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
-  closeConfig();
   alert('Configurações salvas!');
+}
+
+const osintCatalog = [
+  ['abuse.ch','abuse-ch','Verifica host/domínio/IP malicioso pelo Abuse.ch','Grátis (fair use; limite não divulgado)'],
+  ['AdGuard DNS','adguard-dns','Checa se host seria bloqueado pelo DNS AdGuard','Grátis (limite não divulgado)'],
+  ['Ahmia','ahmia','Busca no Ahmia (Tor) por menções ao alvo','Grátis (limite não divulgado)'],
+  ['AlienVault IP Reputation','alienvault-ip-reputation','Reputação de IP/bloco na base AlienVault','Grátis (limite não divulgado)'],
+  ['Amazon S3 Bucket Finder','amazon-s3-bucket-finder','Procura buckets S3 associados','Grátis (limite não divulgado)'],
+  ['Archive.org','archive-org','Consulta histórico no Wayback Machine','Grátis (limite não divulgado)'],
+  ['Azure Blob Finder','azure-blob-finder','Procura blobs Azure associados','Grátis (limite não divulgado)'],
+  ['BGPView','bgpview','Informações BGP/ASN/prefixos','Grátis (limite não divulgado)'],
+  ['BitcoinAbuse','bitcoinabuse','Verifica endereços BTC com denúncias','Grátis (limite não divulgado)'],
+  ['Blockchain','blockchain','Consulta saldo BTC via blockchain.info','Grátis (limite não divulgado)'],
+  ['blocklist.de','blocklist-de','Checa IP/bloco em blocklist.de','Grátis (limite não divulgado)'],
+  ['botvrij.eu','botvrij-eu','Checa domínio malicioso em botvrij.eu','Grátis (limite não divulgado)'],
+  ['Certificate Transparency','certificate-transparency','Coleta hostnames via crt.sh','Grátis (limite não divulgado)'],
+  ['CINS Army List','cins-army-list','Checa IP/bloco na CINS Army','Grátis (limite não divulgado)'],
+  ['CIRCL.LU','circl-lu','Consulta Passive DNS/SSL do CIRCL','Grátis (limite não divulgado)'],
+  ['CleanBrowsing.org','cleanbrowsing-org','Checa bloqueio DNS CleanBrowsing','Grátis (limite não divulgado)'],
+  ['CleanTalk Spam List','cleantalk-spam-list','Checa IP/bloco na lista de spam CleanTalk','Grátis (limite não divulgado)'],
+  ['CloudFlare DNS','cloudflare-dns','Checa bloqueio DNS Cloudflare','Grátis (limite não divulgado)'],
+  ['CoinBlocker Lists','coinblocker-lists','Checa domínio nas CoinBlocker lists','Grátis (limite não divulgado)'],
+  ['CommonCrawl','commoncrawl','Encontra URLs no índice CommonCrawl','Grátis (limite não divulgado)'],
+  ['Crobat API','crobat-api','Busca subdomínios via Crobat','Grátis (limite não divulgado)'],
+  ['CRXcavator','crxcavator','Busca extensões Chrome e risco','Grátis (limite não divulgado)'],
+  ['CyberCrime-Tracker.net','cybercrime-tracker-net','Checa domínio/IP malicioso','Grátis (limite não divulgado)'],
+  ['Debounce','debounce','Verifica e-mail descartável','Grátis (limite não divulgado)'],
+  ['Digital Ocean Space Finder','digital-ocean-space-finder','Procura Spaces associados','Grátis (limite não divulgado)'],
+  ['DNS for Family','dns-for-family','Checa bloqueio DNS for Family','Grátis (limite não divulgado)'],
+  ['DNSDumpster','dnsdumpster','Enumeração passiva de subdomínios','50 queries/dia; 50 resultados/query'],
+  ['DNSGrep','dnsgrep','Passive DNS Rapid7 Sonar','Grátis (limite não divulgado)'],
+  ['DroneBL','dronebl','Consulta open relays/proxies','Grátis (limite não divulgado)'],
+  ['DuckDuckGo','duckduckgo','Consulta descritiva via API','Grátis (limite não divulgado)'],
+  ['EmailFormat','emailformat','Busca padrões de e-mail','Grátis (limite não divulgado)'],
+  ['Emerging Threats','emerging-threats','Checa IP/bloco malicioso','Grátis (limite não divulgado)'],
+  ['Etherscan','etherscan','Consulta saldo Ethereum','Grátis (limite não divulgado)'],
+  ['FortiGuard Antispam','fortiguard-antispam','Checa IP malicioso','Grátis (limite não divulgado)'],
+  ['Github','github','Identifica repositórios públicos associados','Grátis (limite não divulgado)'],
+  ['Google Object Storage Finder','google-object-storage-finder','Procura buckets GCS','Grátis (limite não divulgado)'],
+  ['Google SafeBrowsing','google-safebrowsing','Checa URL em safebrowsing','Grátis (limite não divulgado)'],
+  ['Gravatar','gravatar','Recupera informações via Gravatar','Grátis (limite não divulgado)'],
+  ['Greensnow','greensnow','Checa IP/bloco malicioso','Grátis (limite não divulgado)'],
+  ['grep.app','grep-app','Busca código por menções','Grátis (limite não divulgado)'],
+  ['HackerOne (Unofficial)','hackerone-unofficial','Verifica listagem em h1.nobbd.de','Grátis (limite não divulgado)'],
+  ['HackerTarget','hackertarget','Consultas OSINT (reverse IP etc.)','~50 calls/dia; alguns endpoints 20/dia'],
+  ['Hybrid Analysis','hybrid-analysis','Busca domínios/URLs relacionados','Grátis (limite não divulgado)'],
+  ['Internet Storm Center','internet-storm-center','Checa IP malicioso SANS ISC','Grátis (limite não divulgado)'],
+  ['LeakIX','leakix','Busca vazamentos/serviços expostos','Grátis (limite não divulgado)'],
+  ['Leak-Lookup','leak-lookup','Busca base de vazamentos','Grátis (limite não divulgado)'],
+  ['Maltiverse','maltiverse','Reputação de indicadores','Grátis (limite não divulgado)'],
+  ['Mnemonic PassiveDNS','mnemonic-passivedns','Obtém Passive DNS','Grátis (limite não divulgado)'],
+  ['multiproxy.org Open Proxies','multiproxy-org-open-proxies','Checa lista de proxies abertos','Grátis (limite não divulgado)'],
+  ['Onion.link','onion-link','Busca menções no Tor','Grátis (limite não divulgado)'],
+  ['Onionsearchengine.com','onionsearchengine-com','Busca menções no Tor','Grátis (limite não divulgado)'],
+  ['Open Bug Bounty','open-bug-bounty','Checa alvo no Open Bug Bounty','Grátis (limite não divulgado)'],
+  ['OpenDNS','opendns','Checa bloqueio DNS OpenDNS','Grátis (limite não divulgado)'],
+  ['OpenNIC DNS','opennic-dns','Resolve nomes via OpenNIC','Grátis (limite não divulgado)'],
+  ['OpenPhish','openphish','Checa phishing em OpenPhish','Grátis (limite não divulgado)'],
+  ['OpenStreetMap','openstreetmap','Geocodificação/lat-long','Grátis (limite não divulgado)'],
+  ['PhishStats','phishstats','Checa IP/bloco malicioso','Grátis (limite não divulgado)'],
+  ['PhishTank','phishtank','Checa host/domínio phishing','Grátis (limite não divulgado)'],
+  ['Project Honey Pot','project-honey-pot','Reputação de IP','Grátis (limite não divulgado)'],
+  ['Psbdmp','psbdmp','Consulta e-mails/domínios vazados','Grátis (limite não divulgado)'],
+  ['PunkSpider','punkspider','Checa vulnerabilidade do alvo','Grátis (limite não divulgado)'],
+  ['Quad9','quad9','Checa bloqueio DNS Quad9','Grátis (limite não divulgado)'],
+  ['ReverseWhois','reversewhois','Reverse WHOIS','Grátis (limite não divulgado)'],
+  ['RIPE','ripe','Netblocks/ASNs e registro','Grátis (limite não divulgado)'],
+  ['Robtex','robtex','Co-hosting e DNS/IP','Grátis (limite não divulgado)'],
+  ['searchcode','searchcode','Busca repositórios por menção','Grátis (limite não divulgado)'],
+  ['Skymem','skymem','Busca e-mails','Grátis (limite não divulgado)'],
+  ['SORBS','sorbs','Consulta relays/proxies/hosts vulneráveis','Grátis (limite não divulgado)'],
+  ['SpamCop','spamcop','Checa IP/bloco na base SpamCop','Grátis (limite não divulgado)'],
+  ['Spamhaus Zen','spamhaus-zen','Checa IP/bloco na Spamhaus ZEN','Grátis (limite não divulgado)'],
+  ['Steven Black Hosts','steven-black-hosts','Checa domínio em lista hosts','Grátis (limite não divulgado)'],
+  ['Sublist3r PassiveDNS','sublist3r-passivedns','Enumeração passiva de subdomínios','Grátis (limite não divulgado)'],
+  ['SURBL','surbl','Checa IP/domínio na SURBL','Grátis (limite não divulgado)'],
+  ['Talos Intelligence','talos-intelligence','Checa IP/bloco malicioso Cisco Talos','Grátis (limite não divulgado)'],
+  ['ThreatCrowd','threatcrowd','Enriquecimento de IOC','Grátis (limite não divulgado)'],
+  ['ThreatFox','threatfox','Checa IP malicioso Abuse.ch','Grátis (fair use; limite não divulgado)'],
+  ['ThreatMiner','threatminer','Passive DNS e threat intel','Grátis (limite não divulgado)'],
+  ['Trumail','trumail','Verifica e-mail descartável','Grátis (limite não divulgado)'],
+  ['Twitter','twitter','Coleta nome/localização de perfis','Grátis (limite não divulgado)'],
+  ['UCEPROTECT','uceprotect','Checa IP/bloco na UCEPROTECT','Grátis (limite não divulgado)'],
+  ['URLScan.io','urlscan-io','Scans e inteligência de URLs/domínios','Search 500/dia; retrieve 500/dia; public scans 2500/dia'],
+  ['VoIP Blacklist (VoIPBL)','voip-blacklist-voipbl','Checa IP/bloco malicioso VoIPBL','Grátis (limite não divulgado)'],
+  ['VXVault.net','vxvault-net','Checa domínio/IP malicioso','Grátis (limite não divulgado)'],
+  ['WiGLE','wigle','Consulta dados de Wi-Fi/APs','Grátis (limite não divulgado)'],
+  ['Wikileaks','wikileaks','Busca menções de domínios/e-mails','Grátis (limite não divulgado)'],
+  ['Wikipedia Edits','wikipedia-edits','Edições Wikipédia por IP/username','Grátis (limite não divulgado)'],
+  ['Yandex DNS','yandex-dns','Checa bloqueio DNS Yandex','Grátis (limite não divulgado)'],
+  ['Zone-H Defacement Check','zone-h-defacement-check','Checa registros/feed Zone-H','Grátis (limite não divulgado)'],
+  ['abuse.ch','abusech','Reputação/feeds de malware e IOC','Grátis (fair use)'],
+  ['URLScan.io','urlscan','Scans/OSINT de URLs e domínios','Grátis (quota por ação)'],
+].map(([name, slug, desc, freeCalls]) => ({ name, slug, desc, freeCalls, brasil: 'Sim', requiresKey: 'Sim' }));
+
+const catalogStorageKey = 'creditoia_api_catalog_rows_v1';
+
+function loadCatalogRows() {
+  const persisted = JSON.parse(localStorage.getItem(catalogStorageKey) || '{}');
+  return osintCatalog.map((row) => ({
+    ...row,
+    link: persisted[row.slug]?.link || '',
+    apiKey: persisted[row.slug]?.apiKey || '',
+    notes: persisted[row.slug]?.notes || '',
+  }));
+}
+
+function persistCatalogCell(slug, field, value) {
+  const persisted = JSON.parse(localStorage.getItem(catalogStorageKey) || '{}');
+  persisted[slug] = persisted[slug] || {};
+  persisted[slug][field] = value;
+  localStorage.setItem(catalogStorageKey, JSON.stringify(persisted));
+}
+
+function renderOsintCatalog() {
+  const q = (document.getElementById('catalogSearch')?.value || '').toLowerCase().trim();
+  const rows = loadCatalogRows().filter((r) => {
+    const hay = `${r.name} ${r.slug} ${r.desc} ${r.freeCalls} ${r.link} ${r.notes}`.toLowerCase();
+    return !q || hay.includes(q);
+  });
+
+  document.getElementById('catalogBody').innerHTML = rows.map((r) => `
+    <tr>
+      <td><strong>${r.name}</strong><br><small>${r.brasil}</small></td>
+      <td>${r.slug}</td>
+      <td>${r.desc}</td>
+      <td>${r.freeCalls}</td>
+      <td><input type="text" placeholder="https://..." value="${r.link || ''}" oninput="persistCatalogCell('${r.slug}','link', this.value)"></td>
+      <td><input type="text" placeholder="API key" value="${r.apiKey || ''}" oninput="persistCatalogCell('${r.slug}','apiKey', this.value)"></td>
+      <td><textarea placeholder="Notas" oninput="persistCatalogCell('${r.slug}','notes', this.value)">${r.notes || ''}</textarea></td>
+    </tr>
+  `).join('');
 }
 
 // Load stats
