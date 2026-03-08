@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import sqlite3, json, os, re, math
 from datetime import datetime
-import urllib.request, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -140,14 +140,25 @@ def init_db():
     """)
 
     apis = [
-        ("opencnpj",   "OpenCNPJ",         "api.opencnpj.org — dados cadastrais gratuitos",                1, ""),
-        ("brasilapi",  "Brasil API",        "brasilapi.com.br — CNPJ e dados públicos",                     1, ""),
-        ("dadosgov",   "Dados.gov.br",      "Portal de dados abertos do governo federal",                   1, ""),
-        ("invertexto", "InverTexto",        "api.invertexto.com — dados enriquecidos (requer key)",          0, ""),
-        ("cnpja",      "CNPJa",             "cnpja.com — dados completos e processos (requer key)",          0, ""),
-        ("datajud",    "DataJud CNJ",       "Processos judiciais nacionais — requer token CNJ",              0, ""),
-        ("anthropic",  "Anthropic Claude",  "IA para análise completa do relatório (requer API key)",        0, ""),
-        ("perplexity", "Perplexity AI",     "Busca web em tempo real + análise de reputação (requer key)",  1, ""),
+        ("cnpja",        "CNPJa",                      "cnpja.com — base empresarial completa (requer key)",                         0, ""),
+        ("opencnpj",     "OpenCNPJ",                   "api.opencnpj.org — dados cadastrais gratuitos",                               1, ""),
+        ("brasilapi",    "Brasil API",                 "brasilapi.com.br — CNPJ e dados públicos",                                    1, ""),
+        ("invertexto",   "InverTexto",                 "api.invertexto.com — enriquecimento empresarial (requer key)",               0, ""),
+        ("dadosgov",     "Dados.gov.br",               "Portal de dados abertos do governo federal",                                  0, ""),
+        ("receitaws",    "ReceitaWS",                  "receitaws.com.br — consulta CNPJ",                                            0, ""),
+        ("serpro",       "Serpro",                     "Integrações oficiais via contrato (requer credenciais)",                      0, ""),
+        ("datajud",      "DataJud CNJ",                "Processos judiciais nacionais — requer token CNJ",                             0, ""),
+        ("jusbrasil",    "Jusbrasil API/Parcerias",    "Integrações privadas para monitoramento processual",                          0, ""),
+        ("tribunais",    "Tribunais Estaduais",        "Fontes regionais de tribunais (configuração customizada)",                   0, ""),
+        ("viacep",       "ViaCEP",                     "viacep.com.br — validação de CEP",                                            1, ""),
+        ("awesomeapi",   "AwesomeAPI CEP",             "awesomeapi.com.br — fallback de CEP",                                         0, ""),
+        ("numverify",    "NumVerify",                  "Validação de telefone (requer key)",                                          0, ""),
+        ("whoisxml",     "WhoisXML API",               "WHOIS e DNS para domínios (requer key)",                                      0, ""),
+        ("securitytrails","SecurityTrails",            "DNS histórico e pivôs de domínio (requer key)",                              0, ""),
+        ("hunter",       "Hunter",                     "Descoberta e validação de e-mails corporativos (requer key)",                0, ""),
+        ("dropcontact",  "Dropcontact",                "Enriquecimento de contatos profissionais (requer key)",                       0, ""),
+        ("perplexity",   "Perplexity AI",              "Busca web em tempo real + análise de reputação (requer key)",                1, ""),
+        ("anthropic",    "Anthropic Claude",           "IA para análise completa do relatório (requer API key)",                      0, ""),
     ]
     for a in apis:
         cur.execute(
@@ -221,26 +232,170 @@ def fetch_invertexto(cnpj, cfg):
     data = fetch_url(f"https://api.invertexto.com/v1/cnpj/{cnpj}?token={key}")
     return data if 'error' not in data else {}
 
+
+def fetch_receitaws(cnpj, cfg):
+    if not cfg.get('receitaws', {}).get('enabled'):
+        return {}
+    data = fetch_url(f"https://www.receitaws.com.br/v1/cnpj/{cnpj}")
+    return data if 'error' not in data else {}
+
+
+def fetch_serpro(cnpj, cfg):
+    if not cfg.get('serpro', {}).get('enabled'):
+        return {}
+    key = cfg['serpro'].get('api_key', '')
+    if not key:
+        return {}
+    # Endpoint real depende de contrato/produto Serpro habilitado.
+    data = fetch_url(
+        f"https://gateway.apiserpro.serpro.gov.br/consulta-cnpj-df/v2/cnpj/{cnpj}",
+        headers={'Authorization': f'Bearer {key}'}
+    )
+    return data if 'error' not in data else {}
+
+
+def fetch_dadosgov(cnpj, cfg):
+    if not cfg.get('dadosgov', {}).get('enabled'):
+        return {}
+    # Exemplo de dataset aberto (não é uma API única de CNPJ, serve como complemento)
+    return {'status': 'enabled', 'nota': 'Dados.gov.br requer seleção de dataset específico por caso de uso.'}
+
+
+def fetch_viacep(cep, cfg):
+    if not cfg.get('viacep', {}).get('enabled') or not cep:
+        return {}
+    clean = re.sub(r'\D', '', str(cep))
+    if len(clean) != 8:
+        return {}
+    data = fetch_url(f"https://viacep.com.br/ws/{clean}/json/")
+    if data.get('erro'):
+        return {}
+    return data if 'error' not in data else {}
+
+
+def fetch_awesomeapi_cep(cep, cfg):
+    if not cfg.get('awesomeapi', {}).get('enabled') or not cep:
+        return {}
+    clean = re.sub(r'\D', '', str(cep))
+    if len(clean) != 8:
+        return {}
+    data = fetch_url(f"https://cep.awesomeapi.com.br/json/{clean}")
+    return data if 'error' not in data else {}
+
+
+def extract_domain(company_data):
+    email = str(company_data.get('email', '') or '').strip().lower()
+    if '@' in email:
+        return email.split('@', 1)[1]
+    site = str(company_data.get('site', '') or company_data.get('website', '') or '').strip().lower()
+    if site:
+        site = site.replace('https://', '').replace('http://', '').split('/')[0]
+        return site
+    return ''
+
+
+def fetch_whoisxml(domain, cfg):
+    if not cfg.get('whoisxml', {}).get('enabled') or not domain:
+        return {}
+    key = cfg['whoisxml'].get('api_key', '')
+    if not key:
+        return {}
+    data = fetch_url(f"https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey={key}&domainName={domain}&outputFormat=JSON")
+    return data if 'error' not in data else {}
+
+
+def fetch_securitytrails(domain, cfg):
+    if not cfg.get('securitytrails', {}).get('enabled') or not domain:
+        return {}
+    key = cfg['securitytrails'].get('api_key', '')
+    if not key:
+        return {}
+    data = fetch_url(f"https://api.securitytrails.com/v1/domain/{domain}", headers={'apikey': key})
+    return data if 'error' not in data else {}
+
+
+def fetch_hunter(domain, cfg):
+    if not cfg.get('hunter', {}).get('enabled') or not domain:
+        return {}
+    key = cfg['hunter'].get('api_key', '')
+    if not key:
+        return {}
+    data = fetch_url(f"https://api.hunter.io/v2/domain-search?domain={domain}&api_key={key}")
+    return data if 'error' not in data else {}
+
+
+def fetch_dropcontact(email, cfg):
+    if not cfg.get('dropcontact', {}).get('enabled') or not email:
+        return {}
+    key = cfg['dropcontact'].get('api_key', '')
+    if not key:
+        return {}
+    payload = json.dumps({'data': [{'email': email}]})
+    try:
+        req = urllib.request.Request(
+            'https://api.dropcontact.io/batch',
+            data=payload.encode(),
+            headers={'X-Access-Token': key, 'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read().decode())
+    except Exception:
+        return {}
+
+
+def fetch_numverify(phone, cfg):
+    if not cfg.get('numverify', {}).get('enabled') or not phone:
+        return {}
+    key = cfg['numverify'].get('api_key', '')
+    if not key:
+        return {}
+    clean = re.sub(r'\D', '', str(phone))
+    data = fetch_url(f"http://apilayer.net/api/validate?access_key={key}&number={clean}&country_code=BR&format=1")
+    return data if 'error' not in data else {}
+
 def fetch_datajud(nome_empresa, cfg):
     if not cfg.get('datajud', {}).get('enabled'):
         return {}
-    # DataJud CNJ public API
-    url = f"https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search"
-    # Returns process data - simplified query
+    key = cfg['datajud'].get('api_key', '')
+    url = "https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search"
     try:
         query = json.dumps({"query": {"match": {"partes.nome": nome_empresa}}, "size": 10})
-        req = urllib.request.Request(url, data=query.encode(), 
-            headers={'Content-Type': 'application/json', 'User-Agent': 'CreditoApp/1.0'})
+        headers = {'Content-Type': 'application/json', 'User-Agent': 'CreditoApp/1.0'}
+        if key:
+            headers['Authorization'] = f'APIKey {key}'
+        req = urllib.request.Request(url, data=query.encode(), headers=headers)
         with urllib.request.urlopen(req, timeout=15) as resp:
             return json.loads(resp.read().decode())
-    except:
+    except Exception:
         return {}
 
-def merge_company_data(opencnpj_data, brasilapi_data, cnpja_data):
-    """Merge all sources, opencnpj takes priority"""
+
+def fetch_jusbrasil(nome_empresa, cfg):
+    if not cfg.get('jusbrasil', {}).get('enabled'):
+        return {}
+    key = cfg['jusbrasil'].get('api_key', '')
+    if not key:
+        return {}
+    # Endpoint depende de parceria; integração preparada para toggle/key.
+    data = fetch_url(
+        f"https://api.jusbrasil.com.br/v1/search/processos?q={urllib.parse.quote(nome_empresa)}",
+        headers={'Authorization': f'Bearer {key}'}
+    )
+    return data if 'error' not in data else {}
+
+
+def fetch_tribunais(nome_empresa, cfg):
+    if not cfg.get('tribunais', {}).get('enabled'):
+        return {}
+    # Integração regional depende do tribunal/UF alvo.
+    return {'status': 'enabled', 'nota': 'Configurar endpoint do tribunal estadual por UF para uso efetivo.'}
+
+def merge_company_data(opencnpj_data, brasilapi_data, cnpja_data, invertexto_data, receitaws_data, serpro_data):
+    """Merge all company sources, últimas fontes têm prioridade."""
     merged = {}
-    for src in [brasilapi_data, cnpja_data, opencnpj_data]:
-        merged.update({k: v for k, v in src.items() if v})
+    for src in [brasilapi_data, receitaws_data, invertexto_data, serpro_data, cnpja_data, opencnpj_data]:
+        if isinstance(src, dict):
+            merged.update({k: v for k, v in src.items() if v})
     return merged
 
 # ─────────────────────────────────────────
@@ -821,25 +976,50 @@ def api_fetch_cnpj():
     cnpj = clean_cnpj(data.get('cnpj', ''))
     if len(cnpj) != 14:
         return jsonify({'error': 'CNPJ inválido'}), 400
-    
+
     cfg = get_api_config()
-    
-    # Fetch from all enabled APIs
+
+    # Company data providers
     opencnpj_data = fetch_opencnpj(cnpj, cfg)
     brasilapi_data = fetch_brasilapi(cnpj, cfg)
     cnpja_data = fetch_cnpja(cnpj, cfg)
     invertexto_data = fetch_invertexto(cnpj, cfg)
-    
-    merged = merge_company_data(opencnpj_data, brasilapi_data, cnpja_data)
-    
+    receitaws_data = fetch_receitaws(cnpj, cfg)
+    serpro_data = fetch_serpro(cnpj, cfg)
+    dadosgov_data = fetch_dadosgov(cnpj, cfg)
+
+    merged = merge_company_data(
+        opencnpj_data,
+        brasilapi_data,
+        cnpja_data,
+        invertexto_data,
+        receitaws_data,
+        serpro_data,
+    )
+
+    # Optional address enrich (CEP)
+    cep = merged.get('cep', '')
+    viacep_data = fetch_viacep(cep, cfg)
+    awesomeapi_data = fetch_awesomeapi_cep(cep, cfg)
+
     return jsonify({
         'success': True,
         'data': merged,
+        'enrichment': {
+            'dadosgov': dadosgov_data,
+            'viacep': viacep_data,
+            'awesomeapi': awesomeapi_data,
+        },
         'sources': {
+            'cnpja': bool(cnpja_data),
             'opencnpj': bool(opencnpj_data and 'cnpj' in opencnpj_data),
             'brasilapi': bool(brasilapi_data and 'cnpj' in brasilapi_data),
-            'cnpja': bool(cnpja_data),
             'invertexto': bool(invertexto_data),
+            'receitaws': bool(receitaws_data),
+            'serpro': bool(serpro_data),
+            'dadosgov': bool(dadosgov_data),
+            'viacep': bool(viacep_data),
+            'awesomeapi': bool(awesomeapi_data),
         }
     })
 
@@ -851,22 +1031,41 @@ def api_analisar():
     parcelas = int(data.get('parcelas', 12))
     juros = float(data.get('juros', 2.5))
     company_data = data.get('company_data', {})
-    
+
     cfg = get_api_config()
-    
-    # Judicial data
+
+    # Judicial and legal data
     nome = company_data.get('razao_social', '')
     judicial_data = fetch_datajud(nome, cfg) if nome else {}
-    
+    jusbrasil_data = fetch_jusbrasil(nome, cfg) if nome else {}
+    tribunais_data = fetch_tribunais(nome, cfg) if nome else {}
+
+    # Contact / domain enrichment
+    domain = extract_domain(company_data)
+    email = company_data.get('email', '')
+    whoisxml_data = fetch_whoisxml(domain, cfg) if domain else {}
+    securitytrails_data = fetch_securitytrails(domain, cfg) if domain else {}
+    hunter_data = fetch_hunter(domain, cfg) if domain else {}
+    dropcontact_data = fetch_dropcontact(email, cfg) if email else {}
+
+    phone = company_data.get('telefone') or company_data.get('ddd_telefone_1')
+    numverify_data = fetch_numverify(phone, cfg) if phone else {}
+
     # Social placeholder (scraping would require browser)
     social_data = {
         'instagram': None,
         'linkedin': None,
         'facebook': None,
         'controversias': False,
-        'nota': 'Análise de redes sociais requer configuração de scraping adicional.'
+        'nota': 'Análise de redes sociais requer configuração de scraping adicional.',
+        'domain': domain,
+        'whoisxml': whoisxml_data,
+        'securitytrails': securitytrails_data,
+        'hunter': hunter_data,
+        'dropcontact': dropcontact_data,
+        'numverify': numverify_data,
     }
-    
+
     # Score
     capital = company_data.get('capital_social', '0')
     score_result = calculate_score(company_data, judicial_data, social_data, valor_solicitado, capital)
@@ -907,7 +1106,7 @@ def api_analisar():
         str(company_data.get('cnae_principal', company_data.get('cnae_fiscal', ''))),
         len(qsa),
         0,
-        json.dumps({'company': company_data, 'judicial': judicial_data, 'social': social_data, 'ai': ai_text, 'ia_usada': ia_usada}, ensure_ascii=False),
+        json.dumps({'company': company_data, 'judicial': judicial_data, 'social': social_data, 'ai': ai_text, 'ia_usada': ia_usada, 'apis': {'jusbrasil': jusbrasil_data, 'tribunais': tribunais_data, 'whoisxml': whoisxml_data, 'securitytrails': securitytrails_data, 'hunter': hunter_data, 'dropcontact': dropcontact_data, 'numverify': numverify_data}}, ensure_ascii=False),
         now, now
     ))
     consulta_id = cur.lastrowid
@@ -949,6 +1148,15 @@ def api_analisar():
         'ia_usada': ia_usada,
         'judicial': judicial_data,
         'social': social_data,
+        'integracoes': {
+            'jusbrasil': bool(jusbrasil_data),
+            'tribunais': bool(tribunais_data),
+            'whoisxml': bool(whoisxml_data),
+            'securitytrails': bool(securitytrails_data),
+            'hunter': bool(hunter_data),
+            'dropcontact': bool(dropcontact_data),
+            'numverify': bool(numverify_data),
+        },
         'has_pdf': bool(pdf_path)
     })
 
